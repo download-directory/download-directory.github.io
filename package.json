@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "watch": "parcel index.html",
-    "build": "parcel build index.html",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "parcel build index.html --public-url ./ --no-minify",
+    "test": "xo && npm run build"
   },
   "keywords": [],
   "author": "Federico Brigante <npm@bfred.it> (https://twitter.com/bfred_it)",
