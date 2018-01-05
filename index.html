@@ -5,12 +5,17 @@
 	<link rel="stylesheet" href="index.css">
 	<script src="index.js" defer></script>
 </head>
-<h1><a href="https://github.com/bfred-it/download-github-dir">download-github-dir</a></h1>
-<input type="checkbox" id="token-toggle">
-<p class="smaller"><label for="token-toggle">Token</label></p>
-<p class="smaller">Enter
-	<a href="https://github.com/settings/tokens/new?description=Download GitHub directory" target="_blank">
-		your personal token</a>:
-	<input id="token" autocomplete="off" size="50" maxlength="40" pattern="[0-9a-f]{40}" required>
-</p>
-<p class="status">Loading...</p>
+<main>
+	<p class="status">Loading...</p>
+</main>
+<footer>
+	<a href="https://github.com/bfred-it/download-github-dir">Source+info</a>
+	—
+	<input type="checkbox" id="token-toggle">
+	<label for="token-toggle">Token</label>
+	<span>
+		Enter
+		<a href="https://github.com/settings/tokens/new?description=Download GitHub directory" target="_blank">
+			your personal token</a>:<br><input id="token" placeholder="Token" autocomplete="off" size="45" maxlength="40" pattern="[0-9a-f]{40}" required>
+	</span>
+</footer>

@@ -57,7 +57,7 @@ async function init() {
 			throw new Error();
 		}
 	} catch (err) {
-		return updateStatus('Provide a URL via <code>?url=</code> parameter. Example: <br /><a class="smaller" href="?url=https://github.com/bfred-it/github-issue-link-status/tree/master/source">?url=https://github.com/bfred-it/github-issue-link-status/tree/master/source</a>');
+		return updateStatus('');
 	}
 
 	const [, repo, branch, dir] = match;
