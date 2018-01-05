@@ -3,22 +3,30 @@
 	--github-green: #28a745;
 	--github-purple: #6f42c1;
 	--github-red: #cb2431;
+	font-size: 5vmin;
 }
-
 body {
 	font-family: sans-serif;
 	display: flex;
 	align-content: center;
 	justify-content: center;
 	flex-direction: column;
-	text-align: center;
 	min-height: 100vh;
-	font-size: 3vw;
+	text-align: center;
 	line-height: 1.5;
+	margin: 0;
+	padding: 10px;
+	box-sizing: border-box;
 }
 h1, pre, p {
 	margin-top: 0;
 	margin-bottom: 1.5rem;
+}
+pre:empty {
+	display: none;
+}
+input {
+	font: inherit;
 }
 h1 {
 	font-size: 1.5em;
