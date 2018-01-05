@@ -52,7 +52,7 @@ async function init() {
 
 	const [, repo, branch, dir] = match;
 
-	document.querySelector('.source').textContent = `${repo.split('/').join('\n')}\n${dir}`;
+	console.log('Source:', {repo, branch, dir});
 
 	updateStatus();
 
