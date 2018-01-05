@@ -1,21 +1,51 @@
 import JSZip from 'jszip';
-import listContent from 'list-github-dir-content';
 import saveFile from 'save-file';
+import listContent from 'list-github-dir-content';
+
+function updateStatus(count, downloaded = 0, done) {
+	const status = document.querySelector('.status');
+	if (!count) {
+		status.textContent = `Downloading directory listing…`;
+	} else if (downloaded < count) {
+		status.textContent = `Downloading (${downloaded}/${count}) files…`;
+	} else if (!done) {
+		status.textContent = `Zipping ${downloaded} files…`;
+	} else {
+		status.textContent = `Downloaded ${downloaded} files! Done!`;
+	}
+}
 
 async function init() {
 	const query = new URLSearchParams(location.search);
-	const files = await listContent.viaTreesApi(query.get('repo'), query.get('dir'), localStorage.token);
+	const repo = query.get('repo');
+	const dir = query.get('dir');
+
+	document.querySelector('.source').textContent = `${repo.split('/').join('\n')}\n${dir}`;
+
+	updateStatus();
+
+	const files = await listContent.viaTreesApi(repo, dir, localStorage.token);
+
+	updateStatus(files.length);
+
+	console.log('Will download:\n' + files.join('\n'));
+
+	let downloaded = 0;
 	const requests = await Promise.all(files.map(async path => {
-		const response = await fetch(`https://raw.githubusercontent.com/${query.get('repo')}/master/${path}`);
-		return {
-			path: path,
-			blob: response.blob()
-		};
+		const response = await fetch(`https://raw.githubusercontent.com/${repo}/master/${path}`);
+		const blob = await response.blob();
+
+		downloaded++;
+		updateStatus(files.length, downloaded);
+		console.log('Downloaded:', path);
+
+		return {path, blob};
 	}));
+	console.log('Downloaded', files.length, 'files');
 
 	const zip = new JSZip();
 	for (const file of requests) {
-		zip.file(file.path.replace(query.get('dir') + '/', ''), file.blob, {
+		zip.file(file.path.replace(dir + '/', ''), file.blob, {
 			binary: true
 		});
 	}
@@ -23,7 +53,10 @@ async function init() {
 		type: 'blob'
 	});
 
-	saveFile(zipBlob, `${query.get('repo')} ${query.get('dir')}.zip`.replace(/\//, '-'))
+	saveFile(zipBlob, `${repo} ${dir}.zip`.replace(/\//, '-'), () => {
+		updateStatus(files.length, downloaded, true);
+		console.log('Done!');
+	});
 }
 
-init()
+init();
