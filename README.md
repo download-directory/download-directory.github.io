@@ -8,6 +8,12 @@ For example, Three.js repo is more than 500MB and its archive is 200MB. What if 
 
 This is an alternative to the existing [GitZip](https://kinolien.github.io/gitzip/) and [DownGit](https://minhaskamal.github.io/DownGit/) but without the cruft.
 
+
 ## Related
 
 [list-github-dir-content](https://github.com/bfred-it/list-github-dir-content) - List all the files in a GitHub repo’s directory
+
+
+## License
+
+MIT © [Federico Brigante](http://twitter.com/bfred_it)
