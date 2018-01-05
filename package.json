@@ -19,5 +19,10 @@
     "jszip": "^3.1.5",
     "list-github-dir-content": "^1.0.0",
     "save-file": "^1.2.0"
+  },
+  "xo": {
+    "envs": [
+      "browser"
+    ]
   }
 }

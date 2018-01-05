@@ -2,23 +2,55 @@ import JSZip from 'jszip';
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
+// Matches '/sindresorhus/refined-github/tree/master/source/libs'
+const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
+
 function updateStatus(count, downloaded = 0, done) {
 	const status = document.querySelector('.status');
-	if (!count) {
-		status.textContent = `Downloading directory listing…`;
+	if (typeof count === 'string') {
+		status.innerHTML = count;
+	} else if (!count) {
+		status.innerHTML = `Downloading directory listing…`;
 	} else if (downloaded < count) {
-		status.textContent = `Downloading (${downloaded}/${count}) files…`;
-	} else if (!done) {
-		status.textContent = `Zipping ${downloaded} files…`;
+		status.innerHTML = `Downloading (${downloaded}/${count}) files…`;
+	} else if (done) {
+		status.innerHTML = `Downloaded ${downloaded} files! Done!`;
 	} else {
-		status.textContent = `Downloaded ${downloaded} files! Done!`;
+		status.innerHTML = `Zipping ${downloaded} files…`;
 	}
 }
 
 async function init() {
+	const input = document.querySelector('#token');
+	if (localStorage.token) {
+		input.value = localStorage.token;
+	} else {
+		const toggle = document.querySelector('#token-toggle');
+		toggle.checked = true;
+		updateStatus('Waiting for token...');
+		await new Promise(resolve => {
+			input.addEventListener('input', () => {
+				if (input.checkValidity()) {
+					toggle.checked = false;
+					localStorage.token = input.value;
+					resolve();
+				}
+			});
+		});
+	}
 	const query = new URLSearchParams(location.search);
-	const repo = query.get('repo');
-	const dir = query.get('dir');
+	let match;
+	try {
+		const parsedUrl = new URL(query.get('url'));
+		match = repoDirRegex.exec(parsedUrl.pathname);
+		if (!match) {
+			throw new Error();
+		}
+	} catch (err) {
+		return updateStatus('Provide a URL via <code>?url=</code> parameter. Example: <br /><a class="smaller" href="?url=https://github.com/bfred-it/github-issue-link-status/tree/master/source">?url=https://github.com/bfred-it/github-issue-link-status/tree/master/source</a>');
+	}
+
+	const [, repo, branch, dir] = match;
 
 	document.querySelector('.source').textContent = `${repo.split('/').join('\n')}\n${dir}`;
 
@@ -32,7 +64,7 @@ async function init() {
 
 	let downloaded = 0;
 	const requests = await Promise.all(files.map(async path => {
-		const response = await fetch(`https://raw.githubusercontent.com/${repo}/master/${path}`);
+		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/${path}`);
 		const blob = await response.blob();
 
 		downloaded++;
