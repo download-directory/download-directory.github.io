@@ -20,8 +20,14 @@ function updateStatus(count, downloaded = 0, done) {
 	}
 }
 
-async function init() {
+async function verifyToken() {
 	const input = document.querySelector('#token');
+	input.addEventListener('input', () => {
+		if (input.checkValidity()) {
+			localStorage.token = input.value;
+		}
+	});
+
 	if (localStorage.token) {
 		input.value = localStorage.token;
 	} else {
@@ -29,15 +35,19 @@ async function init() {
 		toggle.checked = true;
 		updateStatus('Waiting for token...');
 		await new Promise(resolve => {
-			input.addEventListener('input', () => {
+			input.addEventListener('input', function handler() {
 				if (input.checkValidity()) {
 					toggle.checked = false;
-					localStorage.token = input.value;
 					resolve();
+					input.removeEventListener('input', handler);
 				}
 			});
 		});
 	}
+}
+
+async function init() {
+	await verifyToken();
 	const query = new URLSearchParams(location.search);
 	let match;
 	try {
