@@ -1,12 +1,11 @@
 language: node_js
 node_js:
   - node
-branches:
-  only: master
 deploy:
   provider: pages
   skip_cleanup: true
   github_token: $GITHUB_TOKEN # Set in travis-ci.org dashboard
   local_dir: ${TRAVIS_BUILD_DIR}/dist
+  target_branch: master
   on:
-    branch: master
+    branch: gh-pages
