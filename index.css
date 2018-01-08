@@ -55,7 +55,6 @@ label:hover {
 [type="checkbox"]:not(:checked) + label + span {
 	display: none;
 }
-/*  ecd9c2fcfd67d24f7773a375ca77db98039d7473 */
 .smaller {
 	font-size: 0.8em;
 }
