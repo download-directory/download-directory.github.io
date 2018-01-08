@@ -1,6 +1,6 @@
 # download-directory.github.io
 
-> Download just a sub directory from a GitHub repo.
+Download just a sub directory from a GitHub repo.
 
 For example, Three.js repo is more than 500MB and its archive is 200MB. What if you just want to download the `build` directory? Try this:
 
