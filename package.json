@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "watch": "parcel index.html",
-    "build": "parcel build index.html --public-url ./",
+    "build": "parcel build index.html --public-url ./ --no-minify",
     "test": "xo && npm run build"
   },
   "keywords": [],
