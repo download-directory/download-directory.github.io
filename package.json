@@ -1,24 +1,18 @@
 {
-  "name": "download-directory.github.io",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "license": "MIT",
   "scripts": {
     "watch": "parcel index.html",
     "build": "parcel build index.html --public-url ./",
     "test": "xo && npm run build"
   },
-  "keywords": [],
-  "author": "Federico Brigante <npm@bfred.it> (https://twitter.com/bfred_it)",
-  "license": "ISC",
-  "devDependencies": {
-    "parcel-bundler": "^1.4.1",
-    "xo": "^0.18.2"
-  },
   "dependencies": {
     "jszip": "^3.1.5",
     "list-github-dir-content": "^1.0.0",
     "save-file": "^1.2.0"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.4.1",
+    "xo": "^0.18.2"
   },
   "xo": {
     "envs": [
