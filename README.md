@@ -1,8 +1,12 @@
 # download-directory.github.io
 
-> Download just a sub directory from a GitHub repo.
+> Download just a sub directory from a GitHub repo
 
-For example, Three.js repo is more than 500MB and its archive is 200MB. What if you just want to download the `build` directory? Try this:
+GitHub doesn’t let you download a single folder from a repo, which might be necessary when you just need a few files from a large repository.
+
+This tool will handle the download of all the files in a directory, in a single click, after you entered your token.
+
+The download starts automatically when you visit pass the link to the GitHub directory as `url` parameter, like:
 
 [**download-directory.github.io**`?url=https://github.com/mrdoob/three.js/tree/dev/build`](https://download-directory.github.io/?url=https://github.com/mrdoob/three.js/tree/dev/build)
 
