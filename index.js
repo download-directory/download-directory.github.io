@@ -5,19 +5,9 @@ import listContent from 'list-github-dir-content';
 // Matches '/sindresorhus/refined-github/tree/master/source/libs'
 const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
 
-function updateStatus(count, downloaded = 0, done) {
-	const status = document.querySelector('.status');
-	if (typeof count === 'string') {
-		status.innerHTML = count;
-	} else if (!count) {
-		status.innerHTML = `Downloading directory listing…`;
-	} else if (downloaded < count) {
-		status.innerHTML = `Downloading (${downloaded}/${count}) files…`;
-	} else if (done) {
-		status.innerHTML = `Downloaded ${downloaded} files! Done!`;
-	} else {
-		status.innerHTML = `Zipping ${downloaded} files…`;
-	}
+function updateStatus(status, ...extra) {
+	document.querySelector('.status').innerHTML = status;
+	console.log(status, ...extra);
 }
 
 async function verifyToken() {
@@ -64,13 +54,11 @@ async function init() {
 
 	console.log('Source:', {repo, branch, dir});
 
-	updateStatus();
+	updateStatus('Retrieving directory info…');
 
 	const files = await listContent.viaTreesApi(repo, dir, localStorage.token);
 
-	updateStatus(files.length);
-
-	console.log('Will download:\n' + files.join('\n'));
+	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
 
 	let downloaded = 0;
 	const requests = await Promise.all(files.map(async path => {
@@ -78,12 +66,11 @@ async function init() {
 		const blob = await response.blob();
 
 		downloaded++;
-		updateStatus(files.length, downloaded);
-		console.log('Downloaded:', path);
+		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
 
 		return {path, blob};
 	}));
-	console.log('Downloaded', files.length, 'files');
+	updateStatus(`Zipping ${downloaded} files…`);
 
 	const zip = new JSZip();
 	for (const file of requests) {
@@ -95,10 +82,10 @@ async function init() {
 		type: 'blob'
 	});
 
-	saveFile(zipBlob, `${repo} ${dir}.zip`.replace(/\//, '-'), () => {
-		updateStatus(files.length, downloaded, true);
-		console.log('Done!');
-	});
+	await new Promise(resolve =>
+		saveFile(zipBlob, `${repo} ${dir}.zip`.replace(/\//, '-'), resolve)
+	);
+	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
 init();
