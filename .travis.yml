@@ -2,7 +2,7 @@ language: node_js
 node_js:
   - node
 branches:
-  only: gh-pages
+  only: source
 deploy:
   provider: pages
   skip_cleanup: true
@@ -10,4 +10,4 @@ deploy:
   local_dir: ${TRAVIS_BUILD_DIR}/dist
   target_branch: master
   on:
-    branch: gh-pages
+    branch: source
