@@ -1,4 +1,4 @@
-# download-directory.github.io
+# download-directory.github.io <img src="logo.svg" width="50" height="50" align="left">
 
 > Download just a sub directory from a GitHub repo
 
