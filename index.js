@@ -6,8 +6,9 @@ import listContent from 'list-github-dir-content';
 const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
 
 function updateStatus(status, ...extra) {
-	document.querySelector('.status').innerHTML = status;
-	console.log(status, ...extra);
+	const el = document.querySelector('.status');
+	el.innerHTML = status || `<strong>download-directory • github • io</strong>`;
+	console.log(el.textContent, ...extra);
 }
 
 async function verifyToken() {
@@ -44,10 +45,10 @@ async function init() {
 		const parsedUrl = new URL(query.get('url'));
 		match = repoDirRegex.exec(parsedUrl.pathname);
 		if (!match) {
-			throw new Error();
+			return updateStatus();
 		}
 	} catch (err) {
-		return updateStatus('');
+		return updateStatus();
 	}
 
 	const [, repo, branch, dir] = match;
