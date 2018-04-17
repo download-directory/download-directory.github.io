@@ -57,7 +57,7 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const files = await listContent.viaTreesApi(repo, dir, localStorage.token, ref);
+	const files = await listContent.viaTreesApi(`${repo}#${ref}`, dir, localStorage.token, ref);
 
 	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
 
@@ -84,7 +84,7 @@ async function init() {
 	});
 
 	await new Promise(resolve =>
-		saveFile(zipBlob, `${repo}_${ref}_${dir}.zip`.replace(/\//, '-'), resolve)
+		saveFile(zipBlob, `${repo} ${ref} ${dir}.zip`.replace(/\//, '-'), resolve)
 	);
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
