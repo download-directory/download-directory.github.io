@@ -1,4 +1,3 @@
-
 :root {
 	--github-green: #28a745;
 	--github-purple: #6f42c1;
@@ -35,6 +34,10 @@ p {
 }
 .status:empty {
 	display: none;
+}
+.status strong:before {
+	content: url(logo.svg) "\A";
+	white-space: pre;
 }
 input {
 	font: inherit;

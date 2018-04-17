@@ -1,8 +1,8 @@
 {
   "license": "MIT",
   "scripts": {
-    "watch": "parcel index.html",
-    "build": "parcel build index.html --public-url ./",
+    "watch": "parcel index.html --no-cache",
+    "build": "parcel build index.html --public-url ./  --no-cache",
     "test": "xo && npm run build"
   },
   "dependencies": {
@@ -11,8 +11,8 @@
     "save-file": "^1.2.0"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.4.1",
-    "xo": "^0.18.2"
+    "parcel-bundler": "^1.7.1",
+    "xo": "*"
   },
   "xo": {
     "envs": [
