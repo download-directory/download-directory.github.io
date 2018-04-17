@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
-// Matches '/sindresorhus/refined-github/tree/master/source/libs'
+// Matches '/<re/po>/tree/<ref>/<dir>'
 const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
 
 function updateStatus(status, ...extra) {
@@ -51,19 +51,19 @@ async function init() {
 		return updateStatus();
 	}
 
-	const [, repo, branch, dir] = match;
+	const [, repo, ref, dir] = match;
 
-	console.log('Source:', {repo, branch, dir});
+	console.log('Source:', {repo, ref, dir});
 
 	updateStatus('Retrieving directory info…');
 
-	const files = await listContent.viaTreesApi(repo, dir, localStorage.token);
+	const files = await listContent.viaTreesApi(`${repo}#${ref}`, dir, localStorage.token, ref);
 
 	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
 
 	let downloaded = 0;
 	const requests = await Promise.all(files.map(async path => {
-		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/${path}`);
+		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${ref}/${path}`);
 		const blob = await response.blob();
 
 		downloaded++;
@@ -84,7 +84,7 @@ async function init() {
 	});
 
 	await new Promise(resolve =>
-		saveFile(zipBlob, `${repo} ${dir}.zip`.replace(/\//, '-'), resolve)
+		saveFile(zipBlob, `${repo} ${ref} ${dir}.zip`.replace(/\//, '-'), resolve)
 	);
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
