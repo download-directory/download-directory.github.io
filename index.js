@@ -90,3 +90,7 @@ async function init() {
 }
 
 init();
+
+window.addEventListener('load', () => {
+	navigator.serviceWorker.register('service-worker.js');
+});

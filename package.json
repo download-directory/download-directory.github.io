@@ -10,7 +10,7 @@
     "save-file": "^1.2.0"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.7.1",
+    "parcel-bundler": "^1.9.1",
     "xo": "*"
   },
   "xo": {
