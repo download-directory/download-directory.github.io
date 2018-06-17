@@ -1,4 +1,4 @@
-import JSZip from 'jszip';
+/* global JSZip */
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
