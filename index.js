@@ -7,7 +7,7 @@ const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
 
 function updateStatus(status, ...extra) {
 	const el = document.querySelector('.status');
-	el.innerHTML = status || `<strong>download-directory • github • io</strong>`;
+	el.innerHTML = status || '<strong>download-directory • github • io</strong>';
 	console.log(el.textContent, ...extra);
 }
 
@@ -47,7 +47,7 @@ async function init() {
 		if (!match) {
 			return updateStatus();
 		}
-	} catch (err) {
+	} catch (error) {
 		return updateStatus();
 	}
 
