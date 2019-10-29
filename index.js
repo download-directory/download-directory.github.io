@@ -57,7 +57,7 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const files = await listContent.viaTreesApi(`${repo}#${ref}`, dir, localStorage.token, ref);
+	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token, ref);
 
 	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
 
