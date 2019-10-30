@@ -1,8 +1,15 @@
 {
   "version": 2,
   "name": "github",
-  "alias": "github-alias",
   "github": {
     "silent": true
-  }
+  },
+  "routes": [
+    {
+      "src": "(.*)",
+      "headers": {
+        "X-Robots-Tag": "noindex,nofollow"
+      }
+    }
+  ]
 }
