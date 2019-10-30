@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "github"
+  "name": "github",
   "alias": "github-alias",
   "github": {
     "silent": true
