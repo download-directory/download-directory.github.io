@@ -85,7 +85,12 @@ async function init() {
 
 	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token, ref);
 
-	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
+	if (files.length > 0) {
+		updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
+	} else {
+		updateStatus('No files to download');
+		return;
+	}
 
 	let downloaded = 0;
 	const requests = await Promise.all(files.map(async path => {
