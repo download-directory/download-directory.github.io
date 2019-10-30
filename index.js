@@ -44,14 +44,14 @@ async function ensureRepoIsAccessible(repo) {
 	const response = await fetch(`https://api.github.com/repos/${repo}`, {headers});
 
 	if (response.status === 404) {
-		document.querySelector('#error-repo-not-found').style.display = 'block';
+		updateStatus('⚠ Repository not found or not accessible with your token');
 		throw new Error(`Repository "${repo}" not found`);
 	}
 
 	const repoMetadata = await response.json();
 
 	if (repoMetadata.private) {
-		document.querySelector('#error-private-repo').style.display = 'block';
+		updateStatus('⚠ Private repositories are <a href="https://github.com/download-directory/download-directory.github.io/issues/7">not supported yet</a>.');
 		throw new Error(`Repository "${repo}" is private`);
 	}
 }
@@ -75,7 +75,7 @@ async function init() {
 	console.log('Source:', {repo, ref, dir});
 
 	if (!navigator.onLine) {
-		document.querySelector('#error-network').style.display = 'block';
+		updateStatus('⚠ You are offline.');
 		throw new Error('User agent is offline');
 	}
 
@@ -94,36 +94,17 @@ async function init() {
 
 	let downloaded = 0;
 	let requests;
-	let abortReason;
 	const controller = new AbortController();
 	try {
 		requests = await Promise.all(files.map(async path => {
-			let response;
-			try {
-				response = await fetch(
-					`https://raw.githubusercontent.com/${repo}/${ref}/${path}`,
-					{signal: controller.signal}
-				);
-			} catch (error) {
-				// DOMException errors are a result of a manually aborted request
-				// Ignore them to avoid distoring error messages
-				if (!(error instanceof DOMException)) {
-					if (navigator.onLine === false) {
-						abortReason = 'network';
-					} else {
-						abortReason = 'blocked';
-					}
-
-					controller.abort();
-					throw error;
-				}
-
-				return;
-			}
+			const response = await fetch(
+				`https://raw.githubusercontent.com/${repo}/${ref}/${path}`,
+				{signal: controller.signal}
+			);
 
 			if (response.status >= 400) {
 				controller.abort();
-				throw new Error(`Could not download file "${path}"`);
+				return;
 			}
 
 			const blob = await response.blob();
@@ -134,15 +115,14 @@ async function init() {
 			return {path, blob};
 		}));
 	} catch (error) {
-		// eslint-disable-next-line default-case
-		switch (abortReason) {
-			case 'network':
-				document.querySelector('#error-network').style.display = 'block';
-				break;
+		controller.abort();
 
-			case 'blocked':
-				document.querySelector('#error-adblocker').style.display = 'block';
-				break;
+		if (navigator.onLine === false) {
+			updateStatus('⚠ Could not download all files, network connection lost.');
+		} else if (error instanceof DOMException) {
+			updateStatus('⚠ Could not download all files.');
+		} else {
+			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
 		}
 
 		throw error;
@@ -167,10 +147,7 @@ async function init() {
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
-init().catch(error => {
-	updateStatus('Could not download files');
-	throw error;
-});
+init();
 
 window.addEventListener('load', () => {
 	navigator.serviceWorker.register('service-worker.js');
