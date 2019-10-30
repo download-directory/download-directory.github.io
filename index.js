@@ -93,7 +93,7 @@ async function init() {
 
 	await ensureRepoIsAccessible(repo);
 
-	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token, ref);
+	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token);
 
 	if (files.length > 0) {
 		updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
