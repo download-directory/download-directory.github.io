@@ -1,4 +1,6 @@
 {
+  "private": true,
+  "name": "download-directory",
   "license": "MIT",
   "scripts": {
     "watch": "parcel index.html --no-cache",
