@@ -37,6 +37,25 @@ async function verifyToken() {
 	}
 }
 
+async function ensureRepoIsAccessible(repo) {
+	const headers = new Headers();
+	headers.append('Authorization', `Bearer ${localStorage.token}`);
+
+	const response = await fetch(`https://api.github.com/repos/${repo}`, {headers});
+
+	if (response.status === 404) {
+		document.querySelector('#error-repo-not-found').style.display = 'block';
+		throw new Error(`Repository "${repo}" not found`);
+	}
+
+	const repoMetadata = await response.json();
+
+	if (repoMetadata.private) {
+		document.querySelector('#error-private-repo').style.display = 'block';
+		throw new Error(`Repository "${repo}" is private`);
+	}
+}
+
 async function init() {
 	await verifyToken();
 	const query = new URLSearchParams(location.search);
@@ -61,6 +80,8 @@ async function init() {
 	}
 
 	updateStatus('Retrieving directory info…');
+
+	await ensureRepoIsAccessible(repo);
 
 	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token, ref);
 
