@@ -38,10 +38,11 @@ async function verifyToken() {
 }
 
 async function ensureRepoIsAccessible(repo) {
-	const headers = new Headers();
-	headers.append('Authorization', `Bearer ${localStorage.token}`);
-
-	const response = await fetch(`https://api.github.com/repos/${repo}`, {headers});
+	const response = await fetch(`https://api.github.com/repos/${repo}`, {
+		headers: {
+			Authorization: `Bearer ${localStorage.token}`
+		}
+	});
 
 	if (response.status === 404) {
 		updateStatus('⚠ Repository not found or not accessible with your token');
