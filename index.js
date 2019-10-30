@@ -112,7 +112,7 @@ async function init() {
 				{signal: controller.signal}
 			);
 
-			if (response.status >= 400) {
+			if (!response.ok) {
 				throw new FileDownloadError(path, response);
 			}
 
