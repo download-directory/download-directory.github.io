@@ -93,15 +93,61 @@ async function init() {
 	}
 
 	let downloaded = 0;
-	const requests = await Promise.all(files.map(async path => {
-		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${ref}/${path}`);
-		const blob = await response.blob();
+	let requests;
+	let abortReason;
+	const controller = new AbortController();
+	try {
+		requests = await Promise.all(files.map(async path => {
+			let response;
+			try {
+				response = await fetch(
+					`https://raw.githubusercontent.com/${repo}/${ref}/${path}`,
+					{signal: controller.signal}
+				);
+			} catch (error) {
+				// DOMException errors are a result of a manually aborted request
+				// Ignore them to avoid distoring error messages
+				if (!(error instanceof DOMException)) {
+					if (navigator.onLine === false) {
+						abortReason = 'network';
+					} else {
+						abortReason = 'blocked';
+					}
 
-		downloaded++;
-		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
+					controller.abort();
+					throw error;
+				}
 
-		return {path, blob};
-	}));
+				return;
+			}
+
+			if (response.status >= 400) {
+				controller.abort();
+				throw new Error(`Could not download file "${path}"`);
+			}
+
+			const blob = await response.blob();
+
+			downloaded++;
+			updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
+
+			return {path, blob};
+		}));
+	} catch (error) {
+		// eslint-disable-next-line default-case
+		switch (abortReason) {
+			case 'network':
+				document.querySelector('#error-network').style.display = 'block';
+				break;
+
+			case 'blocked':
+				document.querySelector('#error-adblocker').style.display = 'block';
+				break;
+		}
+
+		throw error;
+	}
+
 	updateStatus(`Zipping ${downloaded} files…`);
 
 	const zip = new JSZip();
