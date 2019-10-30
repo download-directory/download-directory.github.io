@@ -55,6 +55,11 @@ async function init() {
 
 	console.log('Source:', {repo, ref, dir});
 
+	if (!navigator.onLine) {
+		document.querySelector('#error-network').style.display = 'block';
+		throw new Error('User agent is offline');
+	}
+
 	updateStatus('Retrieving directory info…');
 
 	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token, ref);
@@ -90,7 +95,10 @@ async function init() {
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
-init();
+init().catch(error => {
+	updateStatus('Could not download files');
+	throw error;
+});
 
 window.addEventListener('load', () => {
 	navigator.serviceWorker.register('service-worker.js');

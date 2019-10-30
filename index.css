@@ -75,3 +75,8 @@ input:invalid {
 .info {
 	margin-top: 0.5rem;
 }
+.error {
+	display: none;
+	margin-top: 0.5rem;
+	color: var(--github-red);
+}
