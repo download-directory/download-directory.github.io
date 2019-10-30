@@ -47,7 +47,7 @@ async function init() {
 		if (!match) {
 			return updateStatus();
 		}
-	} catch (error) {
+	} catch (_) {
 		return updateStatus();
 	}
 
@@ -79,6 +79,7 @@ async function init() {
 			binary: true
 		});
 	}
+
 	const zipBlob = await zip.generateAsync({
 		type: 'blob'
 	});
