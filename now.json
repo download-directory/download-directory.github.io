@@ -2,13 +2,7 @@
   "version": 2,
   "name": "github",
   "alias": "github",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@now/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ]
+  "github": {
+    "silent": true
+  }
 }
