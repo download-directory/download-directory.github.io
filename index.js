@@ -126,7 +126,7 @@ async function init() {
 	} catch (error) {
 		controller.abort();
 
-		if (navigator.onLine === false) {
+		if (!navigator.onLine) {
 			updateStatus('⚠ Could not download all files, network connection lost.');
 		} else if (error.name === 'FileDownloadError') {
 			updateStatus('⚠ Could not download all files.', {file: error.file});
