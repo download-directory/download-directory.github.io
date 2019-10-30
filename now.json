@@ -1,7 +1,6 @@
 {
   "version": 2,
   "name": "download-directory-github-io",
-  "silent": true,
   "builds": [
     {
       "src": "package.json",
