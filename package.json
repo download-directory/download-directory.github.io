@@ -6,8 +6,8 @@
     "test": "xo && npm run build"
   },
   "dependencies": {
-    "list-github-dir-content": "^1.1.0",
-    "save-file": "^1.2.0"
+    "list-github-dir-content": "^1.1.1",
+    "save-file": "^2.3.1"
   },
   "devDependencies": {
     "parcel-bundler": "^1.9.1",
