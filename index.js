@@ -2,6 +2,15 @@
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
+class FileDownloadError extends Error {
+	constructor(path, response) {
+		super(`Failed to download file "${path}" from GitHub`);
+		this.name = 'FileDownloadError';
+		this.path = path;
+		this.response = response;
+	}
+}
+
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
 
@@ -104,8 +113,7 @@ async function init() {
 			);
 
 			if (response.status >= 400) {
-				controller.abort();
-				return;
+				throw new FileDownloadError(path, response);
 			}
 
 			const blob = await response.blob();
@@ -120,8 +128,8 @@ async function init() {
 
 		if (navigator.onLine === false) {
 			updateStatus('⚠ Could not download all files, network connection lost.');
-		} else if (error instanceof DOMException) {
-			updateStatus('⚠ Could not download all files.');
+		} else if (error.name === 'FileDownloadError') {
+			updateStatus('⚠ Could not download all files.', {file: error.file});
 		} else {
 			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
 		}
