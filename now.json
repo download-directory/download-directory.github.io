@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "alias": "download-directory",
+  "name": "github",
+  "alias": "github",
   "builds": [
     {
       "src": "package.json",
