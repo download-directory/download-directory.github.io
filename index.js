@@ -118,7 +118,7 @@ async function init() {
 	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
 
 	let downloaded = 0;
-	let requests;
+	const zip = new JSZip();
 	const controller = new AbortController();
 	const download = async path => {
 		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${ref}/${path}`, {
@@ -134,11 +134,13 @@ async function init() {
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
 
-		return {path, blob};
+		zip.file(path.replace(dir + '/', ''), blob, {
+			binary: true
+		});
 	};
 
 	try {
-		requests = await Promise.all(files.map(download));
+		await Promise.all(files.map(download));
 	} catch (error) {
 		controller.abort();
 
@@ -154,13 +156,6 @@ async function init() {
 	}
 
 	updateStatus(`Zipping ${downloaded} files…`);
-
-	const zip = new JSZip();
-	for (const file of requests) {
-		zip.file(file.path.replace(dir + '/', ''), file.blob, {
-			binary: true
-		});
-	}
 
 	const zipBlob = await zip.generateAsync({
 		type: 'blob'
