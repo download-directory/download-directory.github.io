@@ -3,7 +3,7 @@ import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
 // Matches '/<re/po>/tree/<ref>/<dir>'
-const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
+const repoDirRegex = /^[/](.+)[/](.+)[/]tree[/]([^/]+)[/](.*)/;
 
 function updateStatus(status, ...extra) {
 	const el = document.querySelector('.status');
@@ -75,17 +75,13 @@ async function validateInput(repo) {
 		throw new Error('Fetch error');
 	}
 
-	const repoMetadata = await response.json();
-
-	if (repoMetadata.private) {
-		updateStatus('⚠ Private repositories are <a href="https://github.com/download-directory/download-directory.github.io/issues/7">not supported yet</a>.');
-		throw new Error('Private repository');
-	}
+	return response.json();
 }
 
 async function init() {
 	await waitForToken();
 
+	let user;
 	let repo;
 	let ref;
 	let dir;
@@ -93,9 +89,9 @@ async function init() {
 	try {
 		const query = new URLSearchParams(location.search);
 		const parsedUrl = new URL(query.get('url'));
-		[, repo, ref, dir] = repoDirRegex.exec(parsedUrl.pathname);
+		[, user, repo, ref, dir] = repoDirRegex.exec(parsedUrl.pathname);
 
-		console.log('Source:', {repo, ref, dir});
+		console.log('Source:', {user, repo, ref, dir});
 	} catch {
 		return updateStatus();
 	}
@@ -107,34 +103,75 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	await validateInput(repo);
+	const repoMetadata = await validateInput(`${user}/${repo}`);
 
-	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token);
+	const files = await listContent.viaTreesApi({
+		user,
+		repository: repo,
+		ref,
+		directory: decodeURIComponent(dir),
+		token: localStorage.token,
+		getFullData: true
+	});
+
 	if (files.length === 0) {
 		updateStatus('No files to download');
 		return;
 	}
 
-	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
+	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.map(file => file.path).join('\n• '));
 
 	let downloaded = 0;
 	const zip = new JSZip();
 	const controller = new AbortController();
-	const download = async path => {
-		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${ref}/${path}`, {
+
+	const getBlobFromResponse = repoMetadata.private ?
+		async response => {
+			const {content, encoding} = await response.json();
+
+			if (encoding !== 'base64') {
+				throw new Error(`Unknown encoding "${encoding}"`);
+			}
+
+			let decodingResponse;
+			try {
+				decodingResponse = await fetch(`data:application/octet-stream;base64,${content}`);
+			} catch {
+				throw new Error('Decoding failed');
+			}
+
+			if (!decodingResponse.ok) {
+				throw new Error('Decoding failed');
+			}
+
+			return decodingResponse.blob();
+		} :
+		response => response.blob();
+
+	const fetchFile = repoMetadata.private ?
+		file => fetch(file.url, {
+			headers: {
+				Authorization: `Bearer ${localStorage.token}`
+			},
+			signal: controller.signal
+		}) :
+		file => fetch(`https://raw.githubusercontent.com/${user}/${repo}/${ref}/${file.path}`, {
 			signal: controller.signal
 		});
 
+	const download = async file => {
+		const response = await fetchFile(file);
+
 		if (!response.ok) {
-			throw new Error(`HTTP ${response.statusText} for ${path}`);
+			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
 		}
 
-		const blob = await response.blob();
+		const blob = await getBlobFromResponse(response);
 
 		downloaded++;
-		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
+		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
 
-		zip.file(path.replace(dir + '/', ''), blob, {
+		zip.file(file.path.replace(dir + '/', ''), blob, {
 			binary: true
 		});
 	};
@@ -148,6 +185,10 @@ async function init() {
 			updateStatus('⚠ Could not download all files, network connection lost.');
 		} else if (error.message.startsWith('HTTP ')) {
 			updateStatus('⚠ Could not download all files.');
+		} else if (error.message.startsWith('Decoding failed')) {
+			updateStatus('⚠ Could not download file: unable to decode.');
+		} else if (error.message.startsWith('Unknown encoding')) {
+			updateStatus('⚠ Could not download file: unknown encoding.');
 		} else {
 			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
 		}
@@ -161,7 +202,7 @@ async function init() {
 		type: 'blob'
 	});
 
-	await saveFile(zipBlob, `${repo} ${ref} ${dir}.zip`.replace(/\//, '-'));
+	await saveFile(zipBlob, `${user} ${repo} ${ref} ${dir}.zip`.replace(/\//, '-'));
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 

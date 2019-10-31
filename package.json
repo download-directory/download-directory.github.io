@@ -8,7 +8,7 @@
     "test": "xo && npm run build"
   },
   "dependencies": {
-    "list-github-dir-content": "^1.1.1",
+    "list-github-dir-content": "^2.0.0",
     "save-file": "^2.3.1"
   },
   "devDependencies": {
