@@ -3,7 +3,7 @@ name: Deployment
 on:
   push:
     branches:
-    - source
+    - actions
 
 jobs:
   deploy:
@@ -13,7 +13,10 @@ jobs:
       - run: npm install
       - run: npm run test
       - run: npm run build
-      - uses: alex-page/blazing-fast-gh-pages-deploy@v1.1.0
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          site-directory: public
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@master
+        env:
+          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: actions
+          BRANCH: gh-pages
+          FOLDER: public
