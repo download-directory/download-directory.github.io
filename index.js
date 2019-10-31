@@ -2,15 +2,6 @@
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
-class FileDownloadError extends Error {
-	constructor(path, response) {
-		super(`Failed to download file "${path}" from GitHub`);
-		this.name = 'FileDownloadError';
-		this.path = path;
-		this.response = response;
-	}
-}
-
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
 
@@ -25,7 +16,7 @@ function updateStatus(status, ...extra) {
 	console.log(el.textContent, ...extra);
 }
 
-async function verifyToken() {
+async function waitForToken() {
 	const input = document.querySelector('#token');
 	input.addEventListener('input', () => {
 		if (input.checkValidity()) {
@@ -51,7 +42,7 @@ async function verifyToken() {
 	}
 }
 
-async function ensureRepoIsAccessible(repo) {
+async function validateInput(repo) {
 	const response = await fetch(`https://api.github.com/repos/${repo}`, {
 		headers: {
 			Authorization: `Bearer ${localStorage.token}`
@@ -93,22 +84,21 @@ async function ensureRepoIsAccessible(repo) {
 }
 
 async function init() {
-	await verifyToken();
-	const query = new URLSearchParams(location.search);
-	let match;
+	await waitForToken();
+
+	let repo;
+	let ref;
+	let dir;
+
 	try {
+		const query = new URLSearchParams(location.search);
 		const parsedUrl = new URL(query.get('url'));
-		match = repoDirRegex.exec(parsedUrl.pathname);
-		if (!match) {
-			return updateStatus();
-		}
-	} catch (_) {
+		[, repo, ref, dir] = repoDirRegex.exec(parsedUrl.pathname);
+
+		console.log('Source:', {repo, ref, dir});
+	} catch {
 		return updateStatus();
 	}
-
-	const [, repo, ref, dir] = match;
-
-	console.log('Source:', {repo, ref, dir});
 
 	if (!navigator.onLine) {
 		updateStatus('⚠ You are offline.');
@@ -117,45 +107,47 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	await ensureRepoIsAccessible(repo);
+	await validateInput(repo);
 
 	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token);
-
-	if (files.length > 0) {
-		updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
-	} else {
+	if (files.length === 0) {
 		updateStatus('No files to download');
 		return;
 	}
 
+	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
+
 	let downloaded = 0;
-	let requests;
+	const zip = new JSZip();
 	const controller = new AbortController();
+	const download = async path => {
+		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${ref}/${path}`, {
+			signal: controller.signal
+		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.statusText} for ${path}`);
+		}
+
+		const blob = await response.blob();
+
+		downloaded++;
+		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
+
+		zip.file(path.replace(dir + '/', ''), blob, {
+			binary: true
+		});
+	};
+
 	try {
-		requests = await Promise.all(files.map(async path => {
-			const response = await fetch(
-				`https://raw.githubusercontent.com/${repo}/${ref}/${path}`,
-				{signal: controller.signal}
-			);
-
-			if (!response.ok) {
-				throw new FileDownloadError(path, response);
-			}
-
-			const blob = await response.blob();
-
-			downloaded++;
-			updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
-
-			return {path, blob};
-		}));
+		await Promise.all(files.map(download));
 	} catch (error) {
 		controller.abort();
 
 		if (!navigator.onLine) {
 			updateStatus('⚠ Could not download all files, network connection lost.');
-		} else if (error instanceof FileDownloadError) {
-			updateStatus('⚠ Could not download all files.', {file: error.file});
+		} else if (error.message.startsWith('HTTP ')) {
+			updateStatus('⚠ Could not download all files.');
 		} else {
 			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
 		}
@@ -164,13 +156,6 @@ async function init() {
 	}
 
 	updateStatus(`Zipping ${downloaded} files…`);
-
-	const zip = new JSZip();
-	for (const file of requests) {
-		zip.file(file.path.replace(dir + '/', ''), file.blob, {
-			binary: true
-		});
-	}
 
 	const zipBlob = await zip.generateAsync({
 		type: 'blob'
