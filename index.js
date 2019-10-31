@@ -58,9 +58,30 @@ async function ensureRepoIsAccessible(repo) {
 		}
 	});
 
-	if (response.status === 404) {
-		updateStatus('⚠ Repository not found or not accessible with your token');
-		throw new Error(`Repository "${repo}" not found`);
+	switch (response.status) {
+		case 401:
+			updateStatus('⚠ The token provided is invalid or has been revoked.', {token: localStorage.token});
+			throw new Error(`Invalid GitHub API token "${localStorage.token}"`);
+
+		case 403:
+			// See https://developer.github.com/v3/#rate-limiting
+			if (response.headers.get('X-RateLimit-Remaining') === '0') {
+				updateStatus('⚠ Your token rate limit has been exceeded.', {token: localStorage.token});
+				throw new Error(`GitHub API rate limit exceeded for token "${localStorage.token}"`);
+			}
+
+			break;
+
+		case 404:
+			updateStatus('⚠ Repository was not found.', {repo});
+			throw new Error(`Repository "${repo}" not found`);
+
+		default:
+	}
+
+	if (!response.ok) {
+		updateStatus('⚠ Could not obtain repository data from the GitHub API.', {repo, response});
+		throw new Error(`GitHub API request for repo "${repo} failed`);
 	}
 
 	const repoMetadata = await response.json();
