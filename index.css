@@ -64,13 +64,16 @@ label:hover {
 [type="checkbox"]:not(:checked) + * {
 	display: none;
 }
-input:valid {
+#token:valid {
 	color: var(--github-green);
 	border: 1px solid;
 }
-input:invalid {
+#token:invalid {
 	color: var(--github-red);
 	border: 1px solid;
+}
+[name="url"] {
+	font-size: 0.6em;
 }
 .info {
 	margin-top: 0.5rem;

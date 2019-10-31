@@ -16,7 +16,12 @@ const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
 
 function updateStatus(status, ...extra) {
 	const el = document.querySelector('.status');
-	el.innerHTML = status || '<strong>download-directory • github • io</strong>';
+	el.innerHTML = status || `
+		<strong>download-directory • github • io</strong>
+		<form>
+			<input name="url" type="url" size="38" placeholder="Paste GitHub.com folder URL + press Enter">
+		</form>
+	`;
 	console.log(el.textContent, ...extra);
 }
 
