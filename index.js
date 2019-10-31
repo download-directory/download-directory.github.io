@@ -53,7 +53,7 @@ async function ensureRepoIsAccessible(repo) {
 		}
 	});
 
-	if (response.status === 404) {
+	if (!response.ok) {
 		updateStatus('⚠ Repository not found or not accessible with your token');
 		throw new Error(`Repository "${repo}" not found`);
 	}
