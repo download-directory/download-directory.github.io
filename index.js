@@ -96,7 +96,7 @@ async function init() {
 		[, repo, ref, dir] = repoDirRegex.exec(parsedUrl.pathname);
 
 		console.log('Source:', {repo, ref, dir});
-	} catch (_) {
+	} catch {
 		return updateStatus();
 	}
 
