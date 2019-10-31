@@ -155,7 +155,7 @@ async function init() {
 		if (!navigator.onLine) {
 			updateStatus('⚠ Could not download all files, network connection lost.');
 		} else if (error instanceof FileDownloadError) {
-			updateStatus('⚠ Could not download all files.', {file: error.file});
+			updateStatus('⚠ Could not download all files.', {file: error.path});
 		} else {
 			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
 		}
