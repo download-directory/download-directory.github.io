@@ -1,4 +1,4 @@
-name: Blazing fast GitHub Pages deploy
+name: Deployment
 
 on:
   push:
@@ -13,8 +13,7 @@ jobs:
       - run: npm install
       - run: npm run test
       - run: npm run build
-      - name: Deploy site to gh-pages branch
-        uses: alex-page/blazing-fast-gh-pages-deploy@v1.1.0
+      - uses: alex-page/blazing-fast-gh-pages-deploy@v1.1.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           site-directory: public
