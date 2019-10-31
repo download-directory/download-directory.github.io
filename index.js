@@ -81,7 +81,7 @@ async function ensureRepoIsAccessible(repo) {
 
 	if (!response.ok) {
 		updateStatus('⚠ Could not obtain repository data from the GitHub API.', {repo, response});
-		throw new Error(`GitHub API request for repo "${repo} failed`);
+		throw new Error(`GitHub API request for repo "${repo}" failed`);
 	}
 
 	const repoMetadata = await response.json();
