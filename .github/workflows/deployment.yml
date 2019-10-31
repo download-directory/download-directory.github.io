@@ -3,7 +3,7 @@ name: Deployment
 on:
   push:
     branches:
-    - actions
+      - source
 
 jobs:
   deploy:
@@ -17,6 +17,6 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@master
         env:
           ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_BRANCH: actions
-          BRANCH: gh-pages
+          BASE_BRANCH: source
+          BRANCH: master
           FOLDER: public
