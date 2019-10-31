@@ -42,7 +42,7 @@ async function waitForToken() {
 	}
 }
 
-async function validateInput(repo) {
+async function fetchRepoInfo(repo) {
 	const response = await fetch(`https://api.github.com/repos/${repo}`, {
 		headers: {
 			Authorization: `Bearer ${localStorage.token}`
@@ -103,7 +103,7 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const repoMetadata = await validateInput(`${user}/${repo}`);
+	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repo}`);
 
 	const files = await listContent.viaTreesApi({
 		user,
@@ -121,52 +121,44 @@ async function init() {
 
 	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.map(file => file.path).join('\n• '));
 
-	let downloaded = 0;
-	const zip = new JSZip();
 	const controller = new AbortController();
 
-	const getBlobFromResponse = repoMetadata.private ?
-		async response => {
-			const {content, encoding} = await response.json();
-
-			if (encoding !== 'base64') {
-				throw new Error(`Unknown encoding "${encoding}"`);
-			}
-
-			let decodingResponse;
-			try {
-				decodingResponse = await fetch(`data:application/octet-stream;base64,${content}`);
-			} catch {
-				throw new Error('Decoding failed');
-			}
-
-			if (!decodingResponse.ok) {
-				throw new Error('Decoding failed');
-			}
-
-			return decodingResponse.blob();
-		} :
-		response => response.blob();
-
-	const fetchFile = repoMetadata.private ?
-		file => fetch(file.url, {
-			headers: {
-				Authorization: `Bearer ${localStorage.token}`
-			},
-			signal: controller.signal
-		}) :
-		file => fetch(`https://raw.githubusercontent.com/${user}/${repo}/${ref}/${file.path}`, {
+	const fetchPublicFile = async file => {
+		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repo}/${ref}/${file.path}`, {
 			signal: controller.signal
 		});
-
-	const download = async file => {
-		const response = await fetchFile(file);
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
 		}
 
-		const blob = await getBlobFromResponse(response);
+		return response.blob();
+	};
+
+	const fetchPrivateFile = async file => {
+		const response = await fetch(file.url, {
+			headers: {
+				Authorization: `Bearer ${localStorage.token}`
+			},
+			signal: controller.signal
+		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
+		}
+
+		const {content} = await response.json();
+
+		return (await fetch(`data:application/octet-stream;base64,${content}`)).blob();
+	};
+
+	let downloaded = 0;
+	const zip = new JSZip();
+
+	const download = async file => {
+		const blob = repoIsPrivate ?
+			await fetchPrivateFile(file) :
+			await fetchPublicFile(file);
 
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
@@ -185,10 +177,6 @@ async function init() {
 			updateStatus('⚠ Could not download all files, network connection lost.');
 		} else if (error.message.startsWith('HTTP ')) {
 			updateStatus('⚠ Could not download all files.');
-		} else if (error.message.startsWith('Decoding failed')) {
-			updateStatus('⚠ Could not download file: unable to decode.');
-		} else if (error.message.startsWith('Unknown encoding')) {
-			updateStatus('⚠ Could not download file: unknown encoding.');
 		} else {
 			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
 		}
