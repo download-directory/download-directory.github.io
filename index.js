@@ -89,7 +89,7 @@ async function init() {
 	try {
 		const query = new URLSearchParams(location.search);
 		const parsedUrl = new URL(query.get('url'));
-		[, user, repo, ref, dir] = repoDirRegex.exec(parsedUrl.pathname);
+		[, user, repo, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
 		console.log('Source:', {user, repo, ref, dir});
 	} catch {
