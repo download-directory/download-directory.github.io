@@ -3,7 +3,7 @@ import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
 // Matches '/<re/po>/tree/<ref>/<dir>'
-const repoDirRegex = /^[/](.+)[/](.+)[/]tree[/]([^/]+)[/](.*)/;
+const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
 function updateStatus(status, ...extra) {
 	const el = document.querySelector('.status');
