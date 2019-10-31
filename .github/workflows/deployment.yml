@@ -1,0 +1,19 @@
+name: Deployment
+
+on:
+  push:
+    branches:
+    - source
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - run: npm install
+      - run: npm run test
+      - run: npm run build
+      - uses: alex-page/blazing-fast-gh-pages-deploy@v1.1.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          site-directory: public
