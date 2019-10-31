@@ -19,7 +19,7 @@ function updateStatus(status, ...extra) {
 	el.innerHTML = status || `
 		<strong>download-directory • github • io</strong>
 		<form>
-			<input name="url" style="font-size: 0.6em;" size="38" placeholder="Paste GitHub.com folder URL + press Enter">
+			<input name="url" size="38" placeholder="Paste GitHub.com folder URL + press Enter">
 		</form>
 	`;
 	console.log(el.textContent, ...extra);
