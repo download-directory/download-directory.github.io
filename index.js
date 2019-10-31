@@ -150,9 +150,7 @@ async function init() {
 		type: 'blob'
 	});
 
-	await new Promise(resolve =>
-		saveFile(zipBlob, `${repo} ${ref} ${dir}.zip`.replace(/\//, '-'), resolve)
-	);
+	await saveFile(zipBlob, `${repo} ${ref} ${dir}.zip`.replace(/\//, '-'));
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 

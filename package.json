@@ -2,7 +2,7 @@
   "license": "MIT",
   "scripts": {
     "watch": "parcel index.html --no-cache",
-    "build": "parcel build index.html --public-url ./  --no-cache",
+    "build": "parcel build index.html --public-url ./ --out-dir public --no-cache",
     "test": "xo && npm run build"
   },
   "dependencies": {
