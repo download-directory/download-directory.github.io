@@ -51,7 +51,6 @@ async function waitForToken() {
 	}
 }
 
-
 async function validateInput(repo) {
 	const response = await fetch(`https://api.github.com/repos/${repo}`, {
 		headers: {
@@ -130,24 +129,25 @@ async function init() {
 	let downloaded = 0;
 	let requests;
 	const controller = new AbortController();
+	const download = async path => {
+		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${ref}/${path}`, {
+			signal: controller.signal
+		});
+
+		if (!response.ok) {
+			throw new FileDownloadError(path, response);
+		}
+
+		const blob = await response.blob();
+
+		downloaded++;
+		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
+
+		return {path, blob};
+	};
+
 	try {
-		requests = await Promise.all(files.map(async path => {
-			const response = await fetch(
-				`https://raw.githubusercontent.com/${repo}/${ref}/${path}`,
-				{signal: controller.signal}
-			);
-
-			if (!response.ok) {
-				throw new FileDownloadError(path, response);
-			}
-
-			const blob = await response.blob();
-
-			downloaded++;
-			updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
-
-			return {path, blob};
-		}));
+		requests = await Promise.all(files.map(download));
 	} catch (error) {
 		controller.abort();
 
