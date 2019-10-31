@@ -2,6 +2,15 @@
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
+class FileDownloadError extends Error {
+	constructor(path, response) {
+		super(`Failed to download file "${path}" from GitHub`);
+		this.name = 'FileDownloadError';
+		this.path = path;
+		this.response = response;
+	}
+}
+
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const repoDirRegex = /^[/](.+[/].+)[/]tree[/]([^/]+)[/](.*)/;
 
@@ -37,6 +46,26 @@ async function verifyToken() {
 	}
 }
 
+async function ensureRepoIsAccessible(repo) {
+	const response = await fetch(`https://api.github.com/repos/${repo}`, {
+		headers: {
+			Authorization: `Bearer ${localStorage.token}`
+		}
+	});
+
+	if (response.status === 404) {
+		updateStatus('⚠ Repository not found or not accessible with your token');
+		throw new Error(`Repository "${repo}" not found`);
+	}
+
+	const repoMetadata = await response.json();
+
+	if (repoMetadata.private) {
+		updateStatus('⚠ Private repositories are <a href="https://github.com/download-directory/download-directory.github.io/issues/7">not supported yet</a>.');
+		throw new Error(`Repository "${repo}" is private`);
+	}
+}
+
 async function init() {
 	await verifyToken();
 	const query = new URLSearchParams(location.search);
@@ -55,22 +84,59 @@ async function init() {
 
 	console.log('Source:', {repo, ref, dir});
 
+	if (!navigator.onLine) {
+		updateStatus('⚠ You are offline.');
+		throw new Error('User agent is offline');
+	}
+
 	updateStatus('Retrieving directory info…');
 
-	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token, ref);
+	await ensureRepoIsAccessible(repo);
 
-	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
+	const files = await listContent.viaTreesApi(`${repo}#${ref}`, decodeURIComponent(dir), localStorage.token);
+
+	if (files.length > 0) {
+		updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.join('\n• '));
+	} else {
+		updateStatus('No files to download');
+		return;
+	}
 
 	let downloaded = 0;
-	const requests = await Promise.all(files.map(async path => {
-		const response = await fetch(`https://raw.githubusercontent.com/${repo}/${ref}/${path}`);
-		const blob = await response.blob();
+	let requests;
+	const controller = new AbortController();
+	try {
+		requests = await Promise.all(files.map(async path => {
+			const response = await fetch(
+				`https://raw.githubusercontent.com/${repo}/${ref}/${path}`,
+				{signal: controller.signal}
+			);
 
-		downloaded++;
-		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
+			if (!response.ok) {
+				throw new FileDownloadError(path, response);
+			}
 
-		return {path, blob};
-	}));
+			const blob = await response.blob();
+
+			downloaded++;
+			updateStatus(`Downloading (${downloaded}/${files.length}) files…`, path);
+
+			return {path, blob};
+		}));
+	} catch (error) {
+		controller.abort();
+
+		if (!navigator.onLine) {
+			updateStatus('⚠ Could not download all files, network connection lost.');
+		} else if (error instanceof FileDownloadError) {
+			updateStatus('⚠ Could not download all files.', {file: error.file});
+		} else {
+			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
+		}
+
+		throw error;
+	}
+
 	updateStatus(`Zipping ${downloaded} files…`);
 
 	const zip = new JSZip();
