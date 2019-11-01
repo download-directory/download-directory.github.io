@@ -148,8 +148,8 @@ async function init() {
 		}
 
 		const {content} = await response.json();
-
-		return (await fetch(`data:application/octet-stream;base64,${content}`)).blob();
+		const decoder = await fetch(`data:application/octet-stream;base64,${content}`);
+		return decoder.blob();
 	};
 
 	let downloaded = 0;
