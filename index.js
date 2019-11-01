@@ -82,16 +82,16 @@ async function init() {
 	await waitForToken();
 
 	let user;
-	let repo;
+	let repository;
 	let ref;
 	let dir;
 
 	try {
 		const query = new URLSearchParams(location.search);
 		const parsedUrl = new URL(query.get('url'));
-		[, user, repo, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
+		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
-		console.log('Source:', {user, repo, ref, dir});
+		console.log('Source:', {user, repository, ref, dir});
 	} catch {
 		return updateStatus();
 	}
@@ -103,11 +103,11 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repo}`);
+	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
 	const files = await listContent.viaTreesApi({
 		user,
-		repository: repo,
+		repository,
 		ref,
 		directory: decodeURIComponent(dir),
 		token: localStorage.token,
@@ -124,7 +124,7 @@ async function init() {
 	const controller = new AbortController();
 
 	const fetchPublicFile = async file => {
-		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repo}/${ref}/${file.path}`, {
+		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${file.path}`, {
 			signal: controller.signal
 		});
 
@@ -148,8 +148,8 @@ async function init() {
 		}
 
 		const {content} = await response.json();
-
-		return (await fetch(`data:application/octet-stream;base64,${content}`)).blob();
+		const decoder = await fetch(`data:application/octet-stream;base64,${content}`);
+		return decoder.blob();
 	};
 
 	let downloaded = 0;
@@ -190,7 +190,7 @@ async function init() {
 		type: 'blob'
 	});
 
-	await saveFile(zipBlob, `${user} ${repo} ${ref} ${dir}.zip`.replace(/\//, '-'));
+	await saveFile(zipBlob, `${user} ${repository} ${ref} ${dir}.zip`.replace(/\//, '-'));
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
