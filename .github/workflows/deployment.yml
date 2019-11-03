@@ -14,9 +14,9 @@ jobs:
       - run: npm run test
       - run: npm run build
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@master
+        uses: crazy-max/ghaction-github-pages@v1
+        with:
+          target_branch: master
+          build_dir: public
         env:
-          ACCESS_TOKEN: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
-          BASE_BRANCH: source
-          BRANCH: master
-          FOLDER: public
+          GITHUB_PAT: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
