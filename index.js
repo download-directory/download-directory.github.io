@@ -2,8 +2,6 @@
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
-const githubPublicApi = 'https://api.github.com';
-
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
@@ -18,16 +16,24 @@ function updateStatus(status, ...extra) {
 	console.log(el.textContent, ...extra);
 }
 
-async function waitForToken() {
+async function waitForToken(domain) {
+	const key = `token_${domain}`;
+	// Portability
+	if (localStorage.token) {
+		localStorage[key] = localStorage.token;
+		delete localStorage.token;
+	}
+
 	const input = document.querySelector('#token');
 	input.addEventListener('input', () => {
 		if (input.checkValidity()) {
-			localStorage.token = input.value;
+			localStorage[key] = input.value;
 		}
 	});
 
-	if (localStorage.token) {
-		input.value = localStorage.token;
+	if (localStorage[key]) {
+		input.value = localStorage[key];
+		return input.value;
 	} else {
 		const toggle = document.querySelector('#token-toggle');
 		toggle.checked = true;
@@ -36,7 +42,7 @@ async function waitForToken() {
 			input.addEventListener('input', function handler() {
 				if (input.checkValidity()) {
 					toggle.checked = false;
-					resolve();
+					resolve(input.value);
 					input.removeEventListener('input', handler);
 				}
 			});
@@ -44,22 +50,22 @@ async function waitForToken() {
 	}
 }
 
-async function fetchRepoInfo(api, repo) {
+async function fetchRepoInfo(api, token, repo) {
 	const response = await fetch(`${api}/repos/${repo}`, {
 		headers: {
-			Authorization: `Bearer ${localStorage.token}`
+			Authorization: `Bearer ${token}`
 		}
 	});
 
 	switch (response.status) {
 		case 401:
-			updateStatus('⚠ The token provided is invalid or has been revoked.', {token: localStorage.token});
+			updateStatus('⚠ The token provided is invalid or has been revoked.', {token});
 			throw new Error('Invalid token');
 
 		case 403:
 			// See https://developer.github.com/v3/#rate-limiting
 			if (response.headers.get('X-RateLimit-Remaining') === '0') {
-				updateStatus('⚠ Your token rate limit has been exceeded.', {token: localStorage.token});
+				updateStatus('⚠ Your token rate limit has been exceeded.', {token});
 				throw new Error('Rate limit exceeded');
 			}
 
@@ -81,10 +87,9 @@ async function fetchRepoInfo(api, repo) {
 }
 
 async function init() {
-	await waitForToken();
-
-	let isGithubEnterprise;
-	let api;
+	let isGithubEnterprise = false;
+	let githubDomain = 'github.com';
+	let githubApi = 'https://api.github.com';
 	let user;
 	let repository;
 	let ref;
@@ -97,15 +102,16 @@ async function init() {
 
 		isGithubEnterprise = parsedUrl.hostname !== 'github.com'
 		if (isGithubEnterprise) {
-			api = `${parsedUrl.protocol}://${parsedUrl.host}/api`;
-		} else {
-			api = githubPublicApi;
+			githubDomain = parsedUrl.hostname;
+			githubApi = `${parsedUrl.protocol}://${parsedUrl.host}/api/v3`;
 		}
 
-		console.log('Source:', {api, user, repository, ref, dir});
+		console.log('Source:', {githubDomain, user, repository, ref, dir});
 	} catch {
 		return updateStatus();
 	}
+
+	const token = await waitForToken(githubDomain);
 
 	if (!navigator.onLine) {
 		updateStatus('⚠ You are offline.');
@@ -114,15 +120,15 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const {private: repoIsPrivate} = await fetchRepoInfo(api, `${user}/${repository}`);
+	const {private: repoIsPrivate} = await fetchRepoInfo(githubApi, token, `${user}/${repository}`);
 
 	const files = await listContent.viaTreesApi({
-		api,
+		api: githubApi,
 		user,
 		repository,
 		ref,
 		directory: decodeURIComponent(dir),
-		token: localStorage.token,
+		token,
 		getFullData: true
 	});
 
@@ -150,7 +156,7 @@ async function init() {
 	const fetchPrivateFile = async file => {
 		const response = await fetch(file.url, {
 			headers: {
-				Authorization: `Bearer ${localStorage.token}`
+				Authorization: `Bearer ${token}`
 			},
 			signal: controller.signal
 		});
