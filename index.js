@@ -88,9 +88,9 @@ async function fetchRepoInfo(api, token, repo) {
 }
 
 async function init() {
-	let isGithubEnterprise = false;
-	let githubDomain = 'github.com';
-	let githubApi = 'https://api.github.com';
+	let isGHE = false;
+	let domain = 'github.com';
+	let apiEndpoint = 'https://api.github.com';
 	let user;
 	let repository;
 	let ref;
@@ -101,20 +101,20 @@ async function init() {
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
-		isGithubEnterprise = parsedUrl.hostname !== 'github.com';
-		if (isGithubEnterprise) {
-			githubDomain = parsedUrl.hostname;
-			githubApi = `${parsedUrl.protocol}//${parsedUrl.host}/api/v3`;
+		isGHE = parsedUrl.hostname !== 'github.com';
+		if (isGHE) {
+			domain = parsedUrl.hostname;
+			apiEndpoint = `${parsedUrl.protocol}//${parsedUrl.host}/api/v3`;
 
 			document.querySelector('#create-token').href = `${parsedUrl.protocol}//${parsedUrl.host}/settings/tokens/new?description=Download GitHub directory&scopes=repo`;
 		}
 
-		console.log('Source:', {githubDomain, user, repository, ref, dir});
+		console.log('Source:', {domain, user, repository, ref, dir});
 	} catch {
 		return updateStatus();
 	}
 
-	const token = await waitForToken(githubDomain);
+	const token = await waitForToken(domain);
 
 	if (!navigator.onLine) {
 		updateStatus('⚠ You are offline.');
@@ -123,10 +123,10 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const {private: repoIsPrivate} = await fetchRepoInfo(githubApi, token, `${user}/${repository}`);
+	const {private: repoIsPrivate} = await fetchRepoInfo(apiEndpoint, token, `${user}/${repository}`);
 
 	const files = await listContent.viaTreesApi({
-		api: githubApi,
+		api: apiEndpoint,
 		user,
 		repository,
 		ref,
@@ -177,7 +177,7 @@ async function init() {
 	const zip = new JSZip();
 
 	const download = async file => {
-		const blob = (repoIsPrivate || isGithubEnterprise) ?
+		const blob = (repoIsPrivate || isGHE) ?
 			await fetchPrivateFile(file) :
 			await fetchPublicFile(file);
 
