@@ -117,6 +117,7 @@ async function init() {
 	const {private: repoIsPrivate} = await fetchRepoInfo(api, `${user}/${repository}`);
 
 	const files = await listContent.viaTreesApi({
+		api,
 		user,
 		repository,
 		ref,
