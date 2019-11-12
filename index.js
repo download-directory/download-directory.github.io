@@ -2,6 +2,8 @@
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
+const githubPublicApi = 'https://api.github.com';
+
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
@@ -42,8 +44,8 @@ async function waitForToken() {
 	}
 }
 
-async function fetchRepoInfo(repo) {
-	const response = await fetch(`https://api.github.com/repos/${repo}`, {
+async function fetchRepoInfo(api, repo) {
+	const response = await fetch(`${api}/repos/${repo}`, {
 		headers: {
 			Authorization: `Bearer ${localStorage.token}`
 		}
@@ -81,6 +83,8 @@ async function fetchRepoInfo(repo) {
 async function init() {
 	await waitForToken();
 
+	let isGithubEnterprise;
+	let api = githubPublicApi;
 	let user;
 	let repository;
 	let ref;
@@ -91,7 +95,12 @@ async function init() {
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
-		console.log('Source:', {user, repository, ref, dir});
+		isGithubEnterprise = parsedUrl.hostname !== 'github.com'
+		if (isGithubEnterprise) {
+			api = `${parsedUrl.protocol}://${parsedUrl.host}/api`;
+		}
+
+		console.log('Source:', {api, user, repository, ref, dir});
 	} catch {
 		return updateStatus();
 	}
@@ -103,7 +112,7 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
+	const {private: repoIsPrivate} = await fetchRepoInfo(api, `${user}/${repository}`);
 
 	const files = await listContent.viaTreesApi({
 		user,
@@ -156,7 +165,7 @@ async function init() {
 	const zip = new JSZip();
 
 	const download = async file => {
-		const blob = repoIsPrivate ?
+		const blob = (repoIsPrivate || isGithubEnterprise) ?
 			await fetchPrivateFile(file) :
 			await fetchPublicFile(file);
 
