@@ -10,7 +10,7 @@ function updateStatus(status, ...extra) {
 	el.innerHTML = status || `
 		<strong>download-directory • github • io</strong>
 		<form>
-			<input name="url" type="url" size="38" placeholder="Paste GitHub.com folder URL + press Enter">
+			<input name="url" type="url" size="38" placeholder="Paste GitHub folder URL + press Enter">
 		</form>
 	`;
 	console.log(el.textContent, ...extra);
@@ -103,7 +103,9 @@ async function init() {
 		isGithubEnterprise = parsedUrl.hostname !== 'github.com'
 		if (isGithubEnterprise) {
 			githubDomain = parsedUrl.hostname;
-			githubApi = `${parsedUrl.protocol}://${parsedUrl.host}/api/v3`;
+			githubApi = `${parsedUrl.protocol}//${parsedUrl.host}/api/v3`;
+
+			document.querySelector('#create-token').href = `${parsedUrl.protocol}//${parsedUrl.host}/settings/tokens/new?description=Download GitHub directory&scopes=repo`
 		}
 
 		console.log('Source:', {githubDomain, user, repository, ref, dir});
