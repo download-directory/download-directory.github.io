@@ -18,6 +18,7 @@ function updateStatus(status, ...extra) {
 
 async function waitForToken(domain) {
 	const key = `token_${domain}`;
+
 	// Portability
 	if (localStorage.token) {
 		localStorage[key] = localStorage.token;
@@ -34,20 +35,20 @@ async function waitForToken(domain) {
 	if (localStorage[key]) {
 		input.value = localStorage[key];
 		return input.value;
-	} else {
-		const toggle = document.querySelector('#token-toggle');
-		toggle.checked = true;
-		updateStatus(`Waiting for <strong>${domain}</strong> token…`);
-		await new Promise(resolve => {
-			input.addEventListener('input', function handler() {
-				if (input.checkValidity()) {
-					toggle.checked = false;
-					resolve(input.value);
-					input.removeEventListener('input', handler);
-				}
-			});
-		});
 	}
+
+	const toggle = document.querySelector('#token-toggle');
+	toggle.checked = true;
+	updateStatus(`Waiting for <strong>${domain}</strong> token…`);
+	await new Promise(resolve => {
+		input.addEventListener('input', function handler() {
+			if (input.checkValidity()) {
+				toggle.checked = false;
+				resolve(input.value);
+				input.removeEventListener('input', handler);
+			}
+		});
+	});
 }
 
 async function fetchRepoInfo(api, token, repo) {
@@ -100,12 +101,12 @@ async function init() {
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
-		isGithubEnterprise = parsedUrl.hostname !== 'github.com'
+		isGithubEnterprise = parsedUrl.hostname !== 'github.com';
 		if (isGithubEnterprise) {
 			githubDomain = parsedUrl.hostname;
 			githubApi = `${parsedUrl.protocol}//${parsedUrl.host}/api/v3`;
 
-			document.querySelector('#create-token').href = `${parsedUrl.protocol}//${parsedUrl.host}/settings/tokens/new?description=Download GitHub directory&scopes=repo`
+			document.querySelector('#create-token').href = `${parsedUrl.protocol}//${parsedUrl.host}/settings/tokens/new?description=Download GitHub directory&scopes=repo`;
 		}
 
 		console.log('Source:', {githubDomain, user, repository, ref, dir});
