@@ -37,7 +37,7 @@ async function waitForToken(domain) {
 	} else {
 		const toggle = document.querySelector('#token-toggle');
 		toggle.checked = true;
-		updateStatus('Waiting for token...');
+		updateStatus(`Waiting for <strong>${domain}</strong> token…`);
 		await new Promise(resolve => {
 			input.addEventListener('input', function handler() {
 				if (input.checkValidity()) {
