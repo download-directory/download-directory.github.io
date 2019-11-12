@@ -126,11 +126,13 @@ async function init() {
 	const {private: repoIsPrivate} = await fetchRepoInfo(apiEndpoint, token, `${user}/${repository}`);
 
 	const files = await listContent.viaTreesApi({
-		api: apiEndpoint,
-		user,
-		repository,
-		ref,
-		directory: decodeURIComponent(dir),
+		resource: {
+			api: apiEndpoint,
+			user,
+			repository,
+			ref,
+			directory: decodeURIComponent(dir),
+		},
 		token,
 		getFullData: true
 	});
