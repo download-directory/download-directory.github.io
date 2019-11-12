@@ -35,7 +35,7 @@ p {
 .status:empty {
 	display: none;
 }
-.status strong:before {
+.status strong.logo:before {
 	content: url(logo.svg) "\A";
 	white-space: pre;
 }

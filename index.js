@@ -8,7 +8,7 @@ const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 function updateStatus(status, ...extra) {
 	const el = document.querySelector('.status');
 	el.innerHTML = status || `
-		<strong>download-directory • github • io</strong>
+		<strong class="logo">download-directory • github • io</strong>
 		<form>
 			<input name="url" type="url" size="38" placeholder="Paste GitHub folder URL + press Enter">
 		</form>
