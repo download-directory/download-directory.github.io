@@ -84,7 +84,7 @@ async function init() {
 	await waitForToken();
 
 	let isGithubEnterprise;
-	let api = githubPublicApi;
+	let api;
 	let user;
 	let repository;
 	let ref;
@@ -98,6 +98,8 @@ async function init() {
 		isGithubEnterprise = parsedUrl.hostname !== 'github.com'
 		if (isGithubEnterprise) {
 			api = `${parsedUrl.protocol}://${parsedUrl.host}/api`;
+		} else {
+			api = githubPublicApi;
 		}
 
 		console.log('Source:', {api, user, repository, ref, dir});
