@@ -126,7 +126,13 @@ async function init() {
 	const willDownloadViaAPI = isGHE || (await fetchRepoInfo(api, token, `${user}/${repository}`)).private;
 
 	const files = await listContent.viaTreesApi({
-		resource: parsedUrl.href,
+		resource: {
+			api,
+			user,
+			repository,
+			ref,
+			directory: decodeURIComponent(directory)
+		},
 		token,
 		getFullData: true
 	});
