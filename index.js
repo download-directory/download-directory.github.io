@@ -131,7 +131,7 @@ async function init() {
 			user,
 			repository,
 			ref,
-			directory: decodeURIComponent(dir),
+			directory: decodeURIComponent(dir)
 		},
 		token,
 		getFullData: true
