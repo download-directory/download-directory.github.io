@@ -18,6 +18,9 @@
   "xo": {
     "envs": [
       "browser"
+    ],
+    "ignores": [
+      "public"
     ]
   }
 }
