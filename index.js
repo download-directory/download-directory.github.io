@@ -105,8 +105,6 @@ async function init() {
 		if (isGHE) {
 			domain = parsedUrl.hostname;
 			api = `https://${parsedUrl.host}/api/v3`;
-
-			document.querySelector('#create-token').host = parsedUrl.host;
 		}
 
 		console.log('Source:', {domain, user, repository, ref, directory});
@@ -114,6 +112,7 @@ async function init() {
 		return updateStatus();
 	}
 
+	document.querySelector('#create-token').host = domain;
 	const token = await waitForToken(domain);
 
 	if (!navigator.onLine) {
