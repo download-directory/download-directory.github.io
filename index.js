@@ -94,22 +94,22 @@ async function init() {
 	let user;
 	let repository;
 	let ref;
-	let dir;
+	let directory;
 
 	try {
 		const query = new URLSearchParams(location.search);
 		const parsedUrl = new URL(query.get('url'));
-		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
+		[, user, repository, ref, directory] = urlParserRegex.exec(parsedUrl.pathname);
 
 		isGHE = parsedUrl.hostname !== 'github.com';
 		if (isGHE) {
 			domain = parsedUrl.hostname;
-			api = `${parsedUrl.protocol}//${parsedUrl.host}/api/v3`;
+			api = `https://${parsedUrl.host}/api/v3`;
 
 			document.querySelector('#create-token').host = parsedUrl.host;
 		}
 
-		console.log('Source:', {domain, user, repository, ref, dir});
+		console.log('Source:', {domain, user, repository, ref, directory});
 	} catch {
 		return updateStatus();
 	}
@@ -131,7 +131,7 @@ async function init() {
 			user,
 			repository,
 			ref,
-			directory: decodeURIComponent(dir)
+			directory: decodeURIComponent(directory)
 		},
 		token,
 		getFullData: true
@@ -186,7 +186,7 @@ async function init() {
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
 
-		zip.file(file.path.replace(dir + '/', ''), blob, {
+		zip.file(file.path.replace(directory + '/', ''), blob, {
 			binary: true
 		});
 	};
@@ -213,7 +213,7 @@ async function init() {
 		type: 'blob'
 	});
 
-	await saveFile(zipBlob, `${user} ${repository} ${ref} ${dir}.zip`.replace(/\//, '-'));
+	await saveFile(zipBlob, `${user} ${repository} ${ref} ${directory}.zip`.replace(/\//, '-'));
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
