@@ -123,7 +123,7 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const {private: repoIsPrivate} = await fetchRepoInfo(apiEndpoint, token, `${user}/${repository}`);
+	const willDownloadViaAPI = isGHE || (await fetchRepoInfo(apiEndpoint, token, `${user}/${repository}`)).private;
 
 	const files = await listContent.viaTreesApi({
 		resource: {
@@ -179,7 +179,7 @@ async function init() {
 	const zip = new JSZip();
 
 	const download = async file => {
-		const blob = (repoIsPrivate || isGHE) ?
+		const blob = willDownloadViaAPI ?
 			await fetchPrivateFile(file) :
 			await fetchPublicFile(file);
 
