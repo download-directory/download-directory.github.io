@@ -51,8 +51,8 @@ async function waitForToken(domain) {
 	});
 }
 
-async function fetchRepoInfo(api, token, repo) {
-	const response = await fetch(`${api}/repos/${repo}`, {
+async function fetchRepoInfo(api, token, repository) {
+	const response = await fetch(`${api}/repos/${repository}`, {
 		headers: {
 			Authorization: `Bearer ${token}`
 		}
@@ -73,14 +73,14 @@ async function fetchRepoInfo(api, token, repo) {
 			break;
 
 		case 404:
-			updateStatus('⚠ Repository was not found.', {repo});
+			updateStatus('⚠ Repository was not found.', {repository});
 			throw new Error('Repository not found');
 
 		default:
 	}
 
 	if (!response.ok) {
-		updateStatus('⚠ Could not obtain repository data from the GitHub API.', {repo, response});
+		updateStatus('⚠ Could not obtain repository data from the GitHub API.', {repository, response});
 		throw new Error('Fetch error');
 	}
 
@@ -90,7 +90,7 @@ async function fetchRepoInfo(api, token, repo) {
 async function init() {
 	let isGHE = false;
 	let domain = 'github.com';
-	let apiEndpoint = 'https://api.github.com';
+	let api = 'https://api.github.com';
 	let user;
 	let repository;
 	let ref;
@@ -104,7 +104,7 @@ async function init() {
 		isGHE = parsedUrl.hostname !== 'github.com';
 		if (isGHE) {
 			domain = parsedUrl.hostname;
-			apiEndpoint = `${parsedUrl.protocol}//${parsedUrl.host}/api/v3`;
+			api = `${parsedUrl.protocol}//${parsedUrl.host}/api/v3`;
 
 			document.querySelector('#create-token').host = parsedUrl.host;
 		}
@@ -123,11 +123,11 @@ async function init() {
 
 	updateStatus('Retrieving directory info…');
 
-	const willDownloadViaAPI = isGHE || (await fetchRepoInfo(apiEndpoint, token, `${user}/${repository}`)).private;
+	const willDownloadViaAPI = isGHE || (await fetchRepoInfo(api, token, `${user}/${repository}`)).private;
 
 	const files = await listContent.viaTreesApi({
 		resource: {
-			api: apiEndpoint,
+			api,
 			user,
 			repository,
 			ref,
