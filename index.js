@@ -106,7 +106,7 @@ async function init() {
 			domain = parsedUrl.hostname;
 			apiEndpoint = `${parsedUrl.protocol}//${parsedUrl.host}/api/v3`;
 
-			document.querySelector('#create-token').href = `${parsedUrl.protocol}//${parsedUrl.host}/settings/tokens/new?description=Download GitHub directory&scopes=repo`;
+			document.querySelector('#create-token').host = parsedUrl.host;
 		}
 
 		console.log('Source:', {domain, user, repository, ref, dir});
