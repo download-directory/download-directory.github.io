@@ -12,6 +12,14 @@ The download starts automatically when you visit pass the link to the GitHub dir
 
 This is an alternative to the existing [GitZip](https://kinolien.github.io/gitzip/) and [DownGit](https://minhaskamal.github.io/DownGit/) but without the cruft.
 
+## Minimal alternative
+
+```
+github-dir () {
+    # Usage: github-dir <url-of-dir> <dest>
+    svn export "$(sed 's/tree\/master/trunk/' <<< "$1")" "$2"
+}
+```
 
 ## Related
 
