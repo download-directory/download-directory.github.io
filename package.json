@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "parcel-bundler": "^1.9.1",
-    "xo": "*"
+    "xo": "^0.25.3"
   },
   "xo": {
     "envs": [
