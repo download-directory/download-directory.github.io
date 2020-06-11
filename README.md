@@ -1,3 +1,5 @@
+[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/download-directory/download-directory.github.io)
+
 # download-directory.github.io <img src="logo.svg" width="50" height="50" align="left">
 
 > Download just a sub directory from a GitHub repo
