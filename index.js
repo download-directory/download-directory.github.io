@@ -6,14 +6,14 @@ import listContent from 'list-github-dir-content';
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
 function updateStatus(status, ...extra) {
-	const el = document.querySelector('.status');
-	el.innerHTML = status || `
+	const element = document.querySelector('.status');
+	element.innerHTML = status || `
 		<strong>download-directory • github • io</strong>
 		<form>
 			<input name="url" type="url" size="38" placeholder="Paste GitHub.com folder URL + press Enter">
 		</form>
 	`;
-	console.log(el.textContent, ...extra);
+	console.log(element.textContent, ...extra);
 }
 
 async function waitForToken() {

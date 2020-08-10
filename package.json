@@ -12,12 +12,16 @@
     "save-file": "^2.3.1"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.9.1",
-    "xo": "^0.25.3"
+    "parcel-bundler": "^1.12.4",
+    "xo": "^0.33.0"
   },
   "xo": {
     "envs": [
       "browser"
-    ]
+    ],
+    "rules": {
+      "unicorn/better-regex": "off",
+      "unicorn/no-fn-reference-in-iterator": "off"
+    }
   }
 }
