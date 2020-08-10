@@ -3,21 +3,28 @@
   "name": "download-directory",
   "license": "MIT",
   "scripts": {
-    "watch": "parcel index.html --no-cache",
-    "build": "parcel build index.html --public-url ./ --out-dir public --no-cache",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "start": "sirv public",
+    "validate": "svelte-check",
     "test": "xo && npm run build"
   },
-  "dependencies": {
-    "list-github-dir-content": "^3.0.0",
-    "save-file": "^2.3.1"
-  },
   "devDependencies": {
-    "parcel-bundler": "^1.9.1",
-    "xo": "^0.25.3"
+    "@rollup/plugin-commonjs": "^12.0.0",
+    "@rollup/plugin-node-resolve": "^8.0.0",
+    "rollup": "^2.3.4",
+    "rollup-plugin-livereload": "^1.0.0",
+    "rollup-plugin-svelte": "^5.0.3",
+    "rollup-plugin-terser": "^5.1.2",
+    "svelte": "^3.0.0",
+    "svelte-check": "^1.0.0",
+    "svelte-preprocess": "^4.0.0",
+    "@rollup/plugin-typescript": "^4.0.0",
+    "typescript": "^3.9.3",
+    "tslib": "^2.0.0",
+    "@tsconfig/svelte": "^1.0.0"
   },
-  "xo": {
-    "envs": [
-      "browser"
-    ]
+  "dependencies": {
+    "sirv-cli": "^1.0.0"
   }
 }
