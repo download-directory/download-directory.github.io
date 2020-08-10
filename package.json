@@ -5,7 +5,7 @@
 	"scripts": {
 		"build": "parcel build index.html --public-url ./ --out-dir public --no-cache",
 		"test": "xo && npm run build",
-		"watch": "parcel index.html --no-cache"
+		"watch": "parcel index.html --no-cache --out-dir public"
 	},
 	"xo": {
 		"envs": [

@@ -3,7 +3,7 @@ name: Deployment
 on:
   push:
     branches:
-      - source
+      - master
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: crazy-max/ghaction-github-pages@v1
         with:
-          target_branch: master
+          target_branch: gh-pages
           build_dir: public
         env:
           GITHUB_PAT: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
