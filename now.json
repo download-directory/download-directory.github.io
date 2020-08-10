@@ -1,16 +1,16 @@
 {
-  "version": 2,
-  "name": "github",
-  "github": {
-    "silent": true,
-    "autoAlias": false
-  },
-  "routes": [
-    {
-      "src": "(.*)",
-      "headers": {
-        "X-Robots-Tag": "noindex,nofollow"
-      }
-    }
-  ]
+	"version": 2,
+	"name": "github",
+	"github": {
+		"silent": true,
+		"autoAlias": false
+	},
+	"routes": [
+		{
+			"src": "(.*)",
+			"headers": {
+				"X-Robots-Tag": "noindex,nofollow"
+			}
+		}
+	]
 }

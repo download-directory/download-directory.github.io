@@ -12,12 +12,10 @@ The download starts automatically when you visit pass the link to the GitHub dir
 
 This is an alternative to the existing [GitZip](https://kinolien.github.io/gitzip/) and [DownGit](https://minhaskamal.github.io/DownGit/) but without the cruft.
 
-
 ## Related
 
 [list-github-dir-content](https://github.com/bfred-it/list-github-dir-content) - List all the files in a GitHub repo’s directory
 [Refined GitHub](https://github.com/sindresorhus/refined-github) - Browser extension that adds a link to this app to GitHub (and much more)
-
 
 ## License
 
