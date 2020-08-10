@@ -43,11 +43,13 @@ async function waitForToken() {
 }
 
 async function fetchRepoInfo(repo) {
-	const response = await fetch(`https://api.github.com/repos/${repo}`, {
-		headers: {
-			Authorization: `Bearer ${localStorage.token}`
-		}
-	});
+	const response = await fetch(`https://api.github.com/repos/${repo}`,
+		localStorage.token ? {
+			headers: {
+				Authorization: `Bearer ${localStorage.token}`
+			}
+		} : {}
+	);
 
 	switch (response.status) {
 		case 401:
@@ -79,8 +81,6 @@ async function fetchRepoInfo(repo) {
 }
 
 async function init() {
-	await waitForToken();
-
 	let user;
 	let repository;
 	let ref;
@@ -167,6 +167,10 @@ async function init() {
 			binary: true
 		});
 	};
+
+	if (repoIsPrivate) {
+		await waitForToken();
+	}
 
 	try {
 		await Promise.all(files.map(download));
