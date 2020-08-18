@@ -1,4 +1,3 @@
-/* global JSZip */
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
 
@@ -80,7 +79,13 @@ async function fetchRepoInfo(repo) {
 	return response.json();
 }
 
+async function getZIP() {
+	const {default: JSZip} = await import('https://cdn.skypack.dev/jszip@^3.4.0');
+	return new JSZip();
+}
+
 async function init() {
+	const zip = getZIP();
 	let user;
 	let repository;
 	let ref;
@@ -153,7 +158,6 @@ async function init() {
 	};
 
 	let downloaded = 0;
-	const zip = new JSZip();
 
 	const download = async file => {
 		const blob = repoIsPrivate ?
@@ -163,7 +167,7 @@ async function init() {
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
 
-		zip.file(file.path.replace(dir + '/', ''), blob, {
+		(await zip).file(file.path.replace(dir + '/', ''), blob, {
 			binary: true
 		});
 	};
@@ -190,7 +194,7 @@ async function init() {
 
 	updateStatus(`Zipping ${downloaded} files…`);
 
-	const zipBlob = await zip.generateAsync({
+	const zipBlob = await (await zip).generateAsync({
 		type: 'blob'
 	});
 
