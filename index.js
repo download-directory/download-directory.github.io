@@ -17,11 +17,6 @@ function updateStatus(status, ...extra) {
 
 async function waitForToken() {
 	const input = document.querySelector('#token');
-	input.addEventListener('input', () => {
-		if (input.checkValidity()) {
-			localStorage.token = input.value;
-		}
-	});
 
 	if (localStorage.token) {
 		input.value = localStorage.token;
@@ -90,6 +85,17 @@ async function init() {
 	let repository;
 	let ref;
 	let dir;
+
+	const input = document.querySelector('#token');
+	if (localStorage.token) {
+		input.value = localStorage.token;
+	}
+
+	input.addEventListener('input', () => {
+		if (input.checkValidity()) {
+			localStorage.token = input.value;
+		}
+	});
 
 	try {
 		const query = new URLSearchParams(location.search);
