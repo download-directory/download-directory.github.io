@@ -47,6 +47,7 @@ p {
 }
 input {
 	background-color: var(--input-box-background);
+	color: var(--font-white);
 	padding: 0.25rem;
 	border-radius: 0.5em;
 	margin: 0.5em;
