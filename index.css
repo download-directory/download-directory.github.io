@@ -44,6 +44,7 @@ p {
 .status strong:before {
 	content: url(logo.svg) "\A";
 	white-space: pre;
+	filter: invert(100%);
 }
 input {
 	background-color: var(--input-box-background);
