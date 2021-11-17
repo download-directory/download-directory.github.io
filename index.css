@@ -4,10 +4,15 @@
 	--github-red: #cb2431;
 	--github-blue: #0366d6;
 	--github-gray: #6a737d;
+	--background-dark: rgb(0, 10, 24);
+	--font-white: #fff;
+	--input-box-background: rgb(15, 22, 32);
 	font-size: 5vmin;
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 body {
+	background: var(--background-dark);
+	color: var(--font-white);
 	display: flex;
 	align-content: center;
 	justify-content: center;
@@ -28,6 +33,7 @@ h1, pre, p {
 	margin-bottom: 0.5rem;
 }
 p {
+	font-weight: 500;
 	max-width: 35em;
 	margin-left: auto;
 	margin-right: auto;
@@ -40,6 +46,10 @@ p {
 	white-space: pre;
 }
 input {
+	background-color: var(--input-box-background);
+	padding: 0.25rem;
+	border-radius: 0.5em;
+	margin: 0.5em;
 	font: inherit;
 	text-align: center;
 }
