@@ -2,6 +2,14 @@
 	"name": "download-directory",
 	"private": true,
 	"license": "MIT",
+	"source": "index.html",
+	"target": {
+		"main": false,
+		"default": {
+			"distDir": "./public",
+			"publicUrl": "./"
+		}
+	},
 	"scripts": {
 		"build": "parcel build index.html --public-url ./ --out-dir public --no-cache",
 		"test": "xo && npm run build",
@@ -12,8 +20,7 @@
 			"browser"
 		],
 		"rules": {
-			"unicorn/better-regex": "off",
-			"unicorn/no-fn-reference-in-iterator": "off"
+			"unicorn/better-regex": "off"
 		}
 	},
 	"dependencies": {
@@ -21,7 +28,7 @@
 		"save-file": "^2.3.1"
 	},
 	"devDependencies": {
-		"parcel-bundler": "^1.12.4",
-		"xo": "^0.33.0"
+		"parcel-bundler": "^1.12.5",
+		"xo": "^0.46.4"
 	}
 }

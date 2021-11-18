@@ -40,9 +40,9 @@ async function fetchRepoInfo(repo) {
 	const response = await fetch(`https://api.github.com/repos/${repo}`,
 		localStorage.token ? {
 			headers: {
-				Authorization: `Bearer ${localStorage.token}`
-			}
-		} : {}
+				Authorization: `Bearer ${localStorage.token}`,
+			},
+		} : {},
 	);
 
 	switch (response.status) {
@@ -75,7 +75,7 @@ async function fetchRepoInfo(repo) {
 }
 
 async function getZIP() {
-	const {default: JSZip} = await import('https://cdn.skypack.dev/jszip@^3.4.0');
+	const {default: JSZip} = await import(new URL('https://cdn.skypack.dev/jszip@^3.4.0'));
 	return new JSZip();
 }
 
@@ -122,7 +122,7 @@ async function init() {
 		ref,
 		directory: decodeURIComponent(dir),
 		token: localStorage.token,
-		getFullData: true
+		getFullData: true,
 	});
 
 	if (files.length === 0) {
@@ -136,7 +136,7 @@ async function init() {
 
 	const fetchPublicFile = async file => {
 		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${file.path}`, {
-			signal: controller.signal
+			signal: controller.signal,
 		});
 
 		if (!response.ok) {
@@ -149,9 +149,9 @@ async function init() {
 	const fetchPrivateFile = async file => {
 		const response = await fetch(file.url, {
 			headers: {
-				Authorization: `Bearer ${localStorage.token}`
+				Authorization: `Bearer ${localStorage.token}`,
 			},
-			signal: controller.signal
+			signal: controller.signal,
 		});
 
 		if (!response.ok) {
@@ -166,15 +166,15 @@ async function init() {
 	let downloaded = 0;
 
 	const download = async file => {
-		const blob = repoIsPrivate ?
-			await fetchPrivateFile(file) :
-			await fetchPublicFile(file);
+		const blob = repoIsPrivate
+			? await fetchPrivateFile(file)
+			: await fetchPublicFile(file);
 
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
 
 		(await zip).file(file.path.replace(dir + '/', ''), blob, {
-			binary: true
+			binary: true,
 		});
 	};
 
@@ -183,7 +183,7 @@ async function init() {
 	}
 
 	try {
-		await Promise.all(files.map(download));
+		await Promise.all(files.map(file => download(file)));
 	} catch (error) {
 		controller.abort();
 
@@ -201,7 +201,7 @@ async function init() {
 	updateStatus(`Zipping ${downloaded} files…`);
 
 	const zipBlob = await (await zip).generateAsync({
-		type: 'blob'
+		type: 'blob',
 	});
 
 	await saveFile(zipBlob, `${user} ${repository} ${ref} ${dir}.zip`.replace(/\//, '-'));
@@ -211,5 +211,5 @@ async function init() {
 init();
 
 window.addEventListener('load', () => {
-	navigator.serviceWorker.register('service-worker.js');
+	navigator.serviceWorker.register(new URL('service-worker.js'));
 });
