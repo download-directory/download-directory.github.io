@@ -188,7 +188,8 @@ ul li::before {
 	white-space: pre;
 	filter: invert(100%);
 }
-input[type="url"] {
+input[type="url"],
+#token{
 	background-color: rgb(255 255 255 / 0.1);
 	padding: 0.5em;
 	border: solid;
@@ -196,6 +197,7 @@ input[type="url"] {
 	margin: 0.5em;
 	font: inherit;
 	text-align: center;
+	max-width: 100%;
 }
 a,
 label {
