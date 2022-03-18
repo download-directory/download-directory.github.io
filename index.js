@@ -1,8 +1,10 @@
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
+import {Sema} from 'async-sema';
 
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
+const DEFAULT_CONCURRENT_DOWNLOADS = 20;
 
 function updateStatus(status, ...extra) {
 	const element = document.querySelector('.status');
@@ -80,6 +82,7 @@ async function init() {
 	let repository;
 	let ref;
 	let dir;
+	let concurrentDownloads;
 
 	const input = document.querySelector('#token');
 	if (localStorage.token) {
@@ -94,6 +97,7 @@ async function init() {
 
 	try {
 		const query = new URLSearchParams(location.search);
+		concurrentDownloads = Number.parseInt(query.get('concurrent') || DEFAULT_CONCURRENT_DOWNLOADS, 10);
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
@@ -159,18 +163,29 @@ async function init() {
 	};
 
 	let downloaded = 0;
+	const semaphore = new Sema(
+		concurrentDownloads, // Allow X concurrent async calls
+		{
+			capacity: 100, // Prealloc space for 100 fukes
+		},
+	);
 
 	const download = async file => {
-		const blob = repoIsPrivate
-			? await fetchPrivateFile(file)
-			: await fetchPublicFile(file);
+		await semaphore.acquire();
+		try {
+			const blob = repoIsPrivate
+				? await fetchPrivateFile(file)
+				: await fetchPublicFile(file);
 
-		downloaded++;
-		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
+			downloaded++;
+			updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
 
-		(await zip).file(file.path.replace(dir + '/', ''), blob, {
-			binary: true,
-		});
+			(await zip).file(file.path.replace(dir + '/', ''), blob, {
+				binary: true,
+			});
+		} finally {
+			semaphore.release();
+		}
 	};
 
 	if (repoIsPrivate) {

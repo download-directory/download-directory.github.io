@@ -24,6 +24,7 @@
 		}
 	},
 	"dependencies": {
+		"async-sema": "^3.1.1",
 		"list-github-dir-content": "^3.0.0",
 		"save-file": "^2.3.1"
 	},
