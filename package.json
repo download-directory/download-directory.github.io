@@ -25,7 +25,7 @@
 	},
 	"dependencies": {
 		"list-github-dir-content": "^3.0.0",
-		"p-map": "^5.3.0",
+		"p-map": "^4.0.0",
 		"p-retry": "^5.0.0",
 		"save-file": "^2.3.1"
 	},
