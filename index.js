@@ -1,5 +1,7 @@
 import saveFile from 'save-file';
 import listContent from 'list-github-dir-content';
+import pMap from 'p-map';
+import pRetry from 'p-retry';
 
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
@@ -159,11 +161,16 @@ async function init() {
 	};
 
 	let downloaded = 0;
+	const downloadFile = async file => pRetry(
+		() => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file),
+		{
+			onFailedAttempt: async error => {
+				await console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
+			},
+		});
 
-	const download = async file => {
-		const blob = repoIsPrivate
-			? await fetchPrivateFile(file)
-			: await fetchPublicFile(file);
+	const downloadToZip = async file => {
+		const blob = await downloadFile(file);
 
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
@@ -178,7 +185,7 @@ async function init() {
 	}
 
 	try {
-		await Promise.all(files.map(file => download(file)));
+		await pMap(files, downloadToZip, {concurrency: 20});
 	} catch (error) {
 		controller.abort();
 
