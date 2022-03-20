@@ -5,8 +5,6 @@ import pRetry from 'p-retry';
 
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
-const DEFAULT_CONCURRENT_DOWNLOADS = 20;
-const DEFAULT_RETRIES = 5;
 
 function updateStatus(status, ...extra) {
 	const element = document.querySelector('.status');
@@ -84,7 +82,6 @@ async function init() {
 	let repository;
 	let ref;
 	let dir;
-	let concurrentDownloads;
 
 	const input = document.querySelector('#token');
 	if (localStorage.token) {
@@ -99,7 +96,6 @@ async function init() {
 
 	try {
 		const query = new URLSearchParams(location.search);
-		concurrentDownloads = Number.parseInt(query.get('concurrent') || DEFAULT_CONCURRENT_DOWNLOADS, 10);
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
@@ -165,12 +161,12 @@ async function init() {
 	};
 
 	let downloaded = 0;
-	const downloadFile = async file => pRetry(() => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file),
+	const downloadFile = async file => pRetry(
+		() => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file),
 		{
 			onFailedAttempt: async error => {
 				await console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
 			},
-			retries: DEFAULT_RETRIES,
 		});
 
 	const downloadToZip = async file => {
@@ -189,7 +185,7 @@ async function init() {
 	}
 
 	try {
-		await pMap(files, downloadToZip, {concurrency: concurrentDownloads});
+		await pMap(files, downloadToZip, {concurrency: 20});
 	} catch (error) {
 		controller.abort();
 
