@@ -2,11 +2,12 @@
 	"name": "download-directory",
 	"private": true,
 	"license": "MIT",
+	"source": "index.html",
 	"scripts": {
-		"build": "parcel build",
+		"build": "parcel build --dist-dir public",
 		"fix": "xo --fix",
 		"test": "xo && npm run build",
-		"watch": "parcel serve"
+		"watch": "parcel serve --dist-dir public"
 	},
 	"xo": {
 		"envs": [
@@ -28,11 +29,5 @@
 		"parcel": "^2.6.2",
 		"process": "^0.11.10",
 		"xo": "^0.50.0"
-	},
-	"targets": {
-		"default": {
-			"source": "index.html",
-			"distDir": "./public"
-		}
 	}
 }
