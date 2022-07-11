@@ -72,7 +72,7 @@ async function fetchRepoInfo(repo) {
 }
 
 async function getZIP() {
-	const {default: JSZip} = await import(new URL('https://cdn.skypack.dev/jszip@^3.4.0'));
+	const JSZip = await import('jszip/dist/jszip.min.js');
 	return new JSZip();
 }
 

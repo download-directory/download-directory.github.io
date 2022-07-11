@@ -23,7 +23,10 @@
 		"save-file": "^2.3.1"
 	},
 	"devDependencies": {
+		"buffer": "^6.0.3",
+		"jszip": "^3.10.0",
 		"parcel": "^2.6.2",
+		"process": "^0.11.10",
 		"xo": "^0.50.0"
 	},
 	"targets": {
