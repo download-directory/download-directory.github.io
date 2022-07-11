@@ -2,18 +2,11 @@
 	"name": "download-directory",
 	"private": true,
 	"license": "MIT",
-	"source": "index.html",
-	"target": {
-		"main": false,
-		"default": {
-			"distDir": "./public",
-			"publicUrl": "./"
-		}
-	},
 	"scripts": {
-		"build": "parcel build index.html --public-url ./ --out-dir public --no-cache",
+		"build": "parcel build",
+		"fix": "xo --fix",
 		"test": "xo && npm run build",
-		"watch": "parcel index.html --no-cache --out-dir public"
+		"watch": "parcel serve"
 	},
 	"xo": {
 		"envs": [
@@ -25,12 +18,18 @@
 	},
 	"dependencies": {
 		"list-github-dir-content": "^3.0.0",
-		"p-map": "^5.0.0",
-		"p-retry": "^5.0.0",
+		"p-map": "^5.5.0",
+		"p-retry": "^5.1.1",
 		"save-file": "^2.3.1"
 	},
 	"devDependencies": {
-		"parcel-bundler": "^1.12.5",
+		"parcel": "^2.6.2",
 		"xo": "^0.50.0"
+	},
+	"targets": {
+		"default": {
+			"source": "index.html",
+			"distDir": "./public"
+		}
 	}
 }
