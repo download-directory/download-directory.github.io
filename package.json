@@ -26,7 +26,7 @@
 	"dependencies": {
 		"list-github-dir-content": "^3.0.0",
 		"p-map": "^4.0.0",
-		"p-retry": "^5.0.0",
+		"p-retry": "5.1.1",
 		"save-file": "^2.3.1"
 	},
 	"devDependencies": {
