@@ -31,6 +31,6 @@
 	},
 	"devDependencies": {
 		"parcel-bundler": "^1.12.5",
-		"xo": "^0.46.4"
+		"xo": "^0.50.0"
 	}
 }
