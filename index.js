@@ -215,5 +215,5 @@ async function init() {
 init();
 
 window.addEventListener('load', () => {
-	navigator.serviceWorker.register(new URL('service-worker.js'));
+	navigator.serviceWorker.register(new URL('service-worker.js', import.meta.url));
 });
