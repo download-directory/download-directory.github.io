@@ -24,13 +24,13 @@
 		}
 	},
 	"dependencies": {
-		"list-github-dir-content": "^3.0.0",
-		"p-map": "^4.0.0",
-		"p-retry": "^5.0.0",
-		"save-file": "^2.3.1"
+		"list-github-dir-content": "3.0.0",
+		"p-map": "4.0.0",
+		"p-retry": "5.0.0",
+		"save-file": "2.3.1"
 	},
 	"devDependencies": {
-		"parcel-bundler": "^1.12.5",
-		"xo": "^0.46.4"
+		"parcel-bundler": "1.12.5",
+		"xo": "0.46.4"
 	}
 }
