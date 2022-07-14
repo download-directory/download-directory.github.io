@@ -3,11 +3,17 @@
 	"private": true,
 	"license": "MIT",
 	"source": "index.html",
+	"target": {
+		"main": false,
+		"default": {
+			"distDir": "./public",
+			"publicUrl": "./"
+		}
+	},
 	"scripts": {
-		"build": "parcel build --dist-dir public",
-		"fix": "xo --fix",
+		"build": "parcel build index.html --public-url ./ --out-dir public --no-cache",
 		"test": "xo && npm run build",
-		"watch": "parcel serve --dist-dir public"
+		"watch": "parcel index.html --no-cache --out-dir public"
 	},
 	"xo": {
 		"envs": [
@@ -19,15 +25,12 @@
 	},
 	"dependencies": {
 		"list-github-dir-content": "^3.0.0",
-		"p-map": "^5.5.0",
-		"p-retry": "^5.1.1",
+		"p-map": "^4.0.0",
+		"p-retry": "^5.0.0",
 		"save-file": "^2.3.1"
 	},
 	"devDependencies": {
-		"buffer": "^6.0.3",
-		"jszip": "^3.10.0",
-		"parcel": "^2.6.2",
-		"process": "^0.11.10",
-		"xo": "^0.50.0"
+		"parcel-bundler": "^1.12.5",
+		"xo": "^0.46.4"
 	}
 }
