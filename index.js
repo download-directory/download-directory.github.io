@@ -77,7 +77,7 @@ async function getZIP() {
 }
 
 async function init() {
-	const zip = getZIP();
+	const zipPromise = getZIP();
 	let user;
 	let repository;
 	let ref;
@@ -164,7 +164,7 @@ async function init() {
 	const downloadFile = async file => pRetry(
 		() => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file),
 		{
-			onFailedAttempt: async error => {
+			async onFailedAttempt(error) {
 				await console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
 			},
 		});
@@ -175,7 +175,8 @@ async function init() {
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
 
-		(await zip).file(file.path.replace(dir + '/', ''), blob, {
+		const zip = await zipPromise;
+		zip.file(file.path.replace(dir + '/', ''), blob, {
 			binary: true,
 		});
 	};
@@ -202,7 +203,8 @@ async function init() {
 
 	updateStatus(`Zipping ${downloaded} files…`);
 
-	const zipBlob = await (await zip).generateAsync({
+	const zip = await zipPromise;
+	const zipBlob = await zip.generateAsync({
 		type: 'blob',
 	});
 
@@ -213,5 +215,5 @@ async function init() {
 init();
 
 window.addEventListener('load', () => {
-	navigator.serviceWorker.register(new URL('service-worker.js'));
+	// navigator.serviceWorker.register(new URL('service-worker.js', import.meta.url));
 });
