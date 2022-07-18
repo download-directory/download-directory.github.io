@@ -12,7 +12,10 @@
 	"xo": {
 		"envs": [
 			"browser"
-		]
+		],
+		"rules": {
+			"unicorn/better-regex": "off"
+		}
 	},
 	"dependencies": {
 		"list-github-dir-content": "^3.0.0",
