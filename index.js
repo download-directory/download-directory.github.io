@@ -71,8 +71,13 @@ async function fetchRepoInfo(repo) {
 	return response.json();
 }
 
+async function getZIP() {
+	const JSZip = await import('jszip');
+	return new JSZip();
+}
+
 async function init() {
-	const zipPromise = import('uzip');
+	const zipPromise = getZIP();
 	let user;
 	let repository;
 	let ref;
@@ -168,14 +173,17 @@ async function init() {
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
 
-		return [file.path.replace(dir + '/', ''), blob];
+		const zip = await zipPromise;
+		zip.file(file.path.replace(dir + '/', ''), blob, {
+			binary: true,
+		});
 	};
 
 	if (repoIsPrivate) {
 		await waitForToken();
 	}
 
-	const blobs = await pMap(files, downloadFile, {concurrency: 20}).catch(error => {
+	await pMap(files, downloadFile, {concurrency: 20}).catch(error => {
 		controller.abort();
 
 		if (!navigator.onLine) {
@@ -191,8 +199,10 @@ async function init() {
 
 	updateStatus(`Zipping ${downloaded} files…`);
 
-	const UZIP = await zipPromise;
-	const zipBlob = await UZIP.encode(Object.fromEntries(blobs));
+	const zip = await zipPromise;
+	const zipBlob = await zip.generateAsync({
+		type: 'blob',
+	});
 
 	await saveFile(zipBlob, `${user} ${repository} ${ref} ${dir}.zip`.replace(/\//, '-'));
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
