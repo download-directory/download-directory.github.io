@@ -71,13 +71,8 @@ async function fetchRepoInfo(repo) {
 	return response.json();
 }
 
-async function getZIP() {
-	const {default: JSZip} = await import(new URL('https://cdn.skypack.dev/jszip@^3.4.0'));
-	return new JSZip();
-}
-
 async function init() {
-	const zip = getZIP();
+	const zipPromise = import('uzip');
 	let user;
 	let repository;
 	let ref;
@@ -161,32 +156,26 @@ async function init() {
 	};
 
 	let downloaded = 0;
-	const downloadFile = async file => pRetry(
-		() => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file),
-		{
-			onFailedAttempt: async error => {
-				await console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
-			},
-		});
 
-	const downloadToZip = async file => {
-		const blob = await downloadFile(file);
+	const downloadFile = async file => {
+		const localDownload = () => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file);
+		const onFailedAttempt = error => {
+			console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
+		};
+
+		const blob = await pRetry(localDownload, {onFailedAttempt});
 
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
 
-		(await zip).file(file.path.replace(dir + '/', ''), blob, {
-			binary: true,
-		});
+		return [file.path.replace(dir + '/', ''), blob];
 	};
 
 	if (repoIsPrivate) {
 		await waitForToken();
 	}
 
-	try {
-		await pMap(files, downloadToZip, {concurrency: 20});
-	} catch (error) {
+	const blobs = await pMap(files, downloadFile, {concurrency: 20}).catch(error => {
 		controller.abort();
 
 		if (!navigator.onLine) {
@@ -198,20 +187,15 @@ async function init() {
 		}
 
 		throw error;
-	}
+	});
 
 	updateStatus(`Zipping ${downloaded} files…`);
 
-	const zipBlob = await (await zip).generateAsync({
-		type: 'blob',
-	});
+	const UZIP = await zipPromise;
+	const zipBlob = await UZIP.encode(Object.fromEntries(blobs));
 
 	await saveFile(zipBlob, `${user} ${repository} ${ref} ${dir}.zip`.replace(/\//, '-'));
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
 init();
-
-window.addEventListener('load', () => {
-	navigator.serviceWorker.register(new URL('service-worker.js'));
-});
