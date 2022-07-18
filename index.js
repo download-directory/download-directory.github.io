@@ -199,9 +199,3 @@ async function init() {
 }
 
 init();
-
-if (location.hostname !== 'localhost') {
-	window.addEventListener('load', () => {
-		navigator.serviceWorker.register(new URL('service-worker.js', import.meta.url));
-	});
-}

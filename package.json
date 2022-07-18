@@ -4,7 +4,7 @@
 	"license": "MIT",
 	"source": "index.html",
 	"scripts": {
-		"build": "parcel build --dist-dir public",
+		"build": "parcel build --dist-dir public --no-scope-hoist",
 		"fix": "xo --fix",
 		"test": "xo && npm run build",
 		"watch": "parcel serve --dist-dir public"
@@ -33,6 +33,6 @@
 		"xo": "^0.50.0"
 	},
 	"parcelIgnore": [
-		"/?url"
+		"/\\?url"
 	]
 }
