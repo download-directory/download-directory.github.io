@@ -22,8 +22,7 @@
 		"list-github-dir-content": "^3.0.0",
 		"p-map": "^5.5.0",
 		"p-retry": "^5.1.1",
-		"save-file": "^2.3.1",
-		"uzip": "^0.20201231.0"
+		"save-file": "^2.3.1"
 	},
 	"devDependencies": {
 		"buffer": "^6.0.3",
