@@ -156,16 +156,14 @@ async function init() {
 	};
 
 	let downloaded = 0;
-	const downloadFile = async file => pRetry(
-		() => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file),
-		{
-			async onFailedAttempt(error) {
-				await console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
-			},
-		});
 
-	const downloadToZip = async file => {
-		const blob = await downloadFile(file);
+	const downloadFile = async file => {
+		const localDownload = () => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file);
+		const onFailedAttempt = error => {
+			console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
+		};
+
+		const blob = await pRetry(localDownload, {onFailedAttempt});
 
 		downloaded++;
 		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
@@ -177,7 +175,7 @@ async function init() {
 		await waitForToken();
 	}
 
-	const blobs = await pMap(files, downloadToZip, {concurrency: 20}).catch(error => {
+	const blobs = await pMap(files, downloadFile, {concurrency: 20}).catch(error => {
 		controller.abort();
 
 		if (!navigator.onLine) {
