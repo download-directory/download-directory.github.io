@@ -108,14 +108,19 @@ async function init() {
 
 	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
-	const files = await listContent.viaTreesApi({
+	const repoListingConfig = {
 		user,
 		repository,
 		ref,
 		directory: decodeURIComponent(dir),
 		token: localStorage.token,
 		getFullData: true,
-	});
+	};
+	let files = await listContent.viaTreesApi(repoListingConfig);
+	if (files.length === 0 && files.truncated) {
+		updateStatus('Warning: It’s a large repo and this it take a long while just to download the list of files. You might want to use "git sparse checkout" instead.');
+		files = await listContent.viaContentsApi(repoListingConfig);
+	}
 
 	if (files.length === 0) {
 		updateStatus('No files to download');
