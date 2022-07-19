@@ -3,13 +3,13 @@ name: Deployment
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - run: npm ci
       - run: npm run test
       - run: npm run build
