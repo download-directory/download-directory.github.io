@@ -132,7 +132,7 @@ async function init() {
 	const controller = new AbortController();
 
 	const fetchPublicFile = async file => {
-		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${file.path}`, {
+		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${encodeURIComponent(file.path)}`, {
 			signal: controller.signal,
 		});
 
