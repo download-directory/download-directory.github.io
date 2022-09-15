@@ -76,8 +76,8 @@ async function getZIP() {
 	return new JSZip();
 }
 
-function replaceFailedPathCharacters(path) {
-	return path.replace(/#/g, '%23');
+function escapeFilepath(path) {
+	return path.replaceAll('#', '%23');
 }
 
 async function init() {
@@ -136,7 +136,7 @@ async function init() {
 	const controller = new AbortController();
 
 	const fetchPublicFile = async file => {
-		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${replaceFailedPathCharacters(file.path)}`, {
+		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
 
