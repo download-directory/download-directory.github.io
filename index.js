@@ -8,8 +8,13 @@ const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
 function updateStatus(status, ...extra) {
 	const element = document.querySelector('.status');
-	element.innerHTML = status || '';
-	console.log(element.textContent, ...extra);
+	if (status) {
+		element.prepend(status + '\n');
+	} else {
+		element.textContent = status || '';
+	}
+
+	console.log(status, ...extra);
 }
 
 async function waitForToken() {
@@ -20,7 +25,7 @@ async function waitForToken() {
 	} else {
 		const toggle = document.querySelector('#token-toggle');
 		toggle.checked = true;
-		updateStatus('Waiting for token...');
+		updateStatus('Waiting for token…');
 		await new Promise(resolve => {
 			input.addEventListener('input', function handler() {
 				if (input.checkValidity()) {
@@ -113,7 +118,7 @@ async function init() {
 		throw new Error('You are offline');
 	}
 
-	updateStatus('Retrieving directory info…');
+	updateStatus(`Retrieving directory info \nRepo: ${user}/${repository}\nDirectory: /${dir}`);
 
 	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
@@ -136,7 +141,7 @@ async function init() {
 		return;
 	}
 
-	updateStatus(`Downloading (0/${files.length}) files…`, '\n• ' + files.map(file => file.path).join('\n• '));
+	updateStatus(`Will download ${files.length} files`);
 
 	const controller = new AbortController();
 
@@ -180,7 +185,7 @@ async function init() {
 		const blob = await pRetry(localDownload, {onFailedAttempt});
 
 		downloaded++;
-		updateStatus(`Downloading (${downloaded}/${files.length}) files…`, file.path);
+		updateStatus(file.path);
 
 		const zip = await zipPromise;
 		zip.file(file.path.replace(dir + '/', ''), blob, {
@@ -206,7 +211,7 @@ async function init() {
 		throw error;
 	});
 
-	updateStatus(`Zipping ${downloaded} files…`);
+	updateStatus(`Zipping ${downloaded} files`);
 
 	const zip = await zipPromise;
 	const zipBlob = await zip.generateAsync({

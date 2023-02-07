@@ -55,7 +55,7 @@ main > * {
 main > :not(h2),
 footer > :not(input) {
 	width: 100%;
-	max-width: 500px;
+	max-width: 600px;
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -126,6 +126,11 @@ input[type='text'] {
 	border: 0.5px solid;
 }
 
+input::placeholder {
+	color: rgb(255 255 255 / 0.5)
+}
+
+input[type='url'],
 input[type='text'],
 textarea {
 	background: #153d2088;
@@ -134,6 +139,7 @@ textarea {
 	font: inherit;
 	color: inherit;
 	outline: none;
+	width: 100%;
 }
 
 textarea:focus,
@@ -225,4 +231,15 @@ label {
 }
 .info {
 	margin-top: 0.5em;
+}
+
+pre {
+	font-size: 10px;
+	text-align: left;
+	padding: 0 10px;
+	max-height: 100vh;
+	overflow: auto;
+}
+pre:first-line {
+	font-size: 20px;
 }
