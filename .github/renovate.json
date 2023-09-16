@@ -1,14 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
-    "group:all",
-    ":preserveSemverRanges"
-  ],
-  "vulnerabilityAlerts": {
-    "enabled": false
-  },
-  "schedule": [
-    "every 5 months"
+    "github>fregante/.github:renovate-preset"
   ]
 }
