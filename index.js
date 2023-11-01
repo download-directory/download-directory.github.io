@@ -48,11 +48,12 @@ async function fetchRepoInfo(repo) {
 	);
 
 	switch (response.status) {
-		case 401:
+		case 401: {
 			updateStatus('⚠ The token provided is invalid or has been revoked.', {token: localStorage.token});
 			throw new Error('Invalid token');
+		}
 
-		case 403:
+		case 403: {
 			// See https://developer.github.com/v3/#rate-limiting
 			if (response.headers.get('X-RateLimit-Remaining') === '0') {
 				updateStatus('⚠ Your token rate limit has been exceeded.', {token: localStorage.token});
@@ -60,10 +61,12 @@ async function fetchRepoInfo(repo) {
 			}
 
 			break;
+		}
 
-		case 404:
+		case 404: {
 			updateStatus('⚠ Repository was not found.', {repo});
 			throw new Error('Repository not found');
+		}
 
 		default:
 	}
@@ -222,4 +225,5 @@ async function init() {
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- I like having an `init` function since there's a lot of code in this file
 init();
