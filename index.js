@@ -225,4 +225,5 @@ async function init() {
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await -- I like having an `init` function since there's a lot of code in this file
 init();
