@@ -187,6 +187,50 @@ async function init() {
 
 		const blob = await pRetry(localDownload, {onFailedAttempt});
 
+		// Support LFS files, detect through method in https://gist.github.com/fkraeutli/66fa741d9a8c2a6a238a01d17ed0edc5#retrieving-lfs-files
+		const fileContent = (await blob.text()).trim();
+		const lfsPattern = /^version https:\/\/git-lfs\.github\.com\/spec\/v1\noid sha256:[a-f0-9]+\nsize \d+$/;
+
+		if (lfsPattern.test(fileContent)) {
+			const regex = /oid sha256:([a-fA-F0-9]+)\nsize (\d+)/;
+			const [sha, size] = fileContent.match(regex);
+
+			const url = `https://github.com/${user}/${repository}.git/info/lfs/objects/batch`;
+
+			const headers = {
+				'Accept': 'application/vnd.git-lfs+json',
+				'Content-type': 'application/json'
+			};
+
+			const lfsRequestBody = {
+				"operation": "download",
+				"transfer": ["basic"],
+				"objects": [
+					{ "oid": sha, "size": size }
+				]
+			};
+
+			try {
+				// NOTE: this will not work, since the api doesnt' support CORS, still figuring out how to do this
+				const response = await fetch(url, {
+					method: 'POST',
+					headers: headers,
+					body: JSON.stringify(lfsRequestBody),
+					mode: 'cors'
+				});
+
+				if (!response.ok) {
+					throw new Error(`HTTP ${response.statusText} for ${file.path}`);
+				}
+
+				const data = await response.json();
+
+			} catch (error) {
+				console.error(error);
+				updateStatus("Error when downloading LFS files, please try again")
+			}
+		}
+
 		downloaded++;
 		updateStatus(file.path);
 
