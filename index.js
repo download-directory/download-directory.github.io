@@ -149,19 +149,20 @@ async function init() {
 	const controller = new AbortController();
 
 	const fetchPublicFile = async file => {
-		let response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
+		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
-		let blob;
+		const responsec = response.clone();
 		const text = await response.text();
+		let blob;
 
 		if (text.startsWith('version https://git-lfs.github.com/spec/v1')) {
-			response = await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
+			const secondaryResponse = await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 				signal: controller.signal,
 			});
-			blob = await response.blob();
+			blob = await secondaryResponse.blob();
 		} else {
-			blob = await response.blob();
+			blob = await responsec.blob();
 		}
 
 		if (!response.ok) {
