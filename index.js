@@ -149,15 +149,26 @@ async function init() {
 	const controller = new AbortController();
 
 	const fetchPublicFile = async file => {
-		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
+		let response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
+		let blob;
+		const text = await response.text();
+
+		if (text.startsWith('version https://git-lfs.github.com/spec/v1')) {
+			response = await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
+				signal: controller.signal,
+			});
+			blob = await response.blob();
+		} else {
+			blob = await response.blob();
+		}
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
 		}
 
-		return response.blob();
+		return blob;
 	};
 
 	const fetchPrivateFile = async file => {
