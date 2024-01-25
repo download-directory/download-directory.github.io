@@ -6,6 +6,19 @@ import pRetry from 'p-retry';
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
+async function isResponseLfs(response) {
+	const text = await response.text();
+	return text.startsWith('version https://git-lfs.github.com/spec/v1');
+}
+
+async function handleLfs(controller, user, repository, ref, path) {
+	const response = await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${path}`, {
+		signal: controller.signal,
+	});
+	const blob = await response.blob();
+	return blob;
+}
+
 function updateStatus(status, ...extra) {
 	const element = document.querySelector('.status');
 	if (status) {
@@ -163,18 +176,8 @@ async function init() {
 		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
-		const responsec = response.clone();
-		const text = await response.text();
-		let blob;
 
-		if (text.startsWith('version https://git-lfs.github.com/spec/v1')) {
-			const secondaryResponse = await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
-				signal: controller.signal,
-			});
-			blob = await secondaryResponse.blob();
-		} else {
-			blob = await responsec.blob();
-		}
+		const blob = await isResponseLfs(response) ? await handleLfs(controller, user, repository, ref, escapeFilepath(file.path)) : await response.blob();
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
