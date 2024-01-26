@@ -6,7 +6,7 @@ import pRetry from 'p-retry';
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
-async function isResponseLfs(response) {
+async function maybeResponseLfs(response) {
 	const length = Number(response.headers.get('content-length'));
 	if (length > 128 && length < 140) {
 		const contents = await response.clone().text();
@@ -165,7 +165,7 @@ async function init() {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
 		}
 
-		const lfsCompatibleResponse = await isResponseLfs(response)
+		const lfsCompatibleResponse = await maybeResponseLfs(response)
 			? await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 				signal: controller.signal,
 			})
