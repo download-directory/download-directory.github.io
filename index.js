@@ -7,8 +7,11 @@ import pRetry from 'p-retry';
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
 async function isResponseLfs(response) {
-	const text = await response.text();
-	return text.startsWith('version https://git-lfs.github.com/spec/v1');
+	const length = Number.parseInt(await response.headers.get('content-length'), 10);
+	if (length > 128 && length < 140) {
+		const text = await response.text();
+		return text.startsWith('version https://git-lfs.github.com/spec/v1');
+	}
 }
 
 async function handleLfs(controller, user, repository, ref, path) {
@@ -176,8 +179,7 @@ async function init() {
 		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
-
-		const blob = await isResponseLfs(response) ? await handleLfs(controller, user, repository, ref, escapeFilepath(file.path)) : await response.blob();
+		const blob = await isResponseLfs(response.clone()) ? await handleLfs(controller, user, repository, ref, escapeFilepath(file.path)) : await response.blob();
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
