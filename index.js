@@ -167,7 +167,7 @@ async function init() {
 
 		const lfsCompatibleResponse = await isResponseLfs(response)
 			? await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
-				signal,
+				signal: controller.signal,
 			})
 			: response;
 
