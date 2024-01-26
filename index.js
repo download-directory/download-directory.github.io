@@ -118,6 +118,7 @@ async function init() {
 		const query = new URLSearchParams(location.search);
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
+		dir = decodeURIComponent(dir);
 
 		console.log('Source:', {user, repository, ref, dir});
 	} catch {
@@ -133,23 +134,24 @@ async function init() {
 
 	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
-	let repoListingConfig;
+	const repoListingConfig = {
+		user,
+		repository,
+		token: localStorage.token,
+		getFullData: true,
+	};
 	let files;
-	while (dir.split('/').length >= 0) {
+	const dirParts = dir.split('/');
+
+	while (dirParts.length >= 0) {
 		try {
-			repoListingConfig = {
-				user,
-				repository,
-				ref,
-				directory: decodeURIComponent(dir),
-				token: localStorage.token,
-				getFullData: true,
-			};
 			files = await listContent.viaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
 			break;
 		} catch {
-			ref = ref + '/' + dir.split('/')[0];
-			dir = dir.split('/').slice(1).join('/');
+			ref = ref + '/' + dirParts[0];
+			dir = dirParts.slice(1).join('/');
+			repoListingConfig.ref = ref;
+			repoListingConfig.directory = dir;
 		}
 	}
 
