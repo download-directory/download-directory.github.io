@@ -118,7 +118,6 @@ async function init() {
 		const query = new URLSearchParams(location.search);
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
-		dir = decodeURIComponent(dir);
 
 		console.log('Source:', {user, repository, ref, dir});
 	} catch {
@@ -141,14 +140,14 @@ async function init() {
 		getFullData: true,
 	};
 	let files;
-	const dirParts = dir.split('/');
+	const dirParts = decodeURIComponent(dir).split('/');
 
 	while (dirParts.length >= 0) {
 		try {
 			files = await listContent.viaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
 			break;
 		} catch {
-			ref = ref + '/' + dirParts.shift();
+			ref += dirParts.shift();
 			dir = dirParts.join('/');
 			repoListingConfig.ref = ref;
 			repoListingConfig.directory = dir;
