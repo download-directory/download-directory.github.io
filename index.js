@@ -147,7 +147,7 @@ async function init() {
 			files = await listContent.viaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
 			break;
 		} catch {
-			ref += dirParts.shift();
+			ref += '/' + dirParts.shift();
 			dir = dirParts.join('/');
 			repoListingConfig.ref = ref;
 			repoListingConfig.directory = dir;
