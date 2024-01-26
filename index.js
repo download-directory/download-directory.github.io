@@ -7,19 +7,11 @@ import pRetry from 'p-retry';
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
 async function isResponseLfs(response) {
-	const length = Number.parseInt(await response.headers.get('content-length'), 10);
+	const length = Number(response.headers.get('content-length'));
 	if (length > 128 && length < 140) {
-		const text = await response.text();
-		return text.startsWith('version https://git-lfs.github.com/spec/v1');
+		const contents = await response.clone().text();
+		return contents.startsWith('version https://git-lfs.github.com/spec/v1');
 	}
-}
-
-async function handleLfs(controller, user, repository, ref, path) {
-	const response = await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${path}`, {
-		signal: controller.signal,
-	});
-	const blob = await response.blob();
-	return blob;
 }
 
 function updateStatus(status, ...extra) {
@@ -168,15 +160,22 @@ async function init() {
 		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
-		const blob = await isResponseLfs(response.clone())
-			? await handleLfs(user, repository, ref, escapeFilepath(file.path), controller.signal) 
-			: await response.blob();
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
 		}
 
-		return blob;
+		const lfsCompatibleResponse = await isResponseLfs(response)
+			? await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
+				signal,
+			});
+			: response;
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
+		}
+
+		return lfsCompatibleResponse.blob();
 	};
 
 	const fetchPrivateFile = async file => {
