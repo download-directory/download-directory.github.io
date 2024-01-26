@@ -135,7 +135,7 @@ async function init() {
 
 	let repoListingConfig;
 	let files;
-	while (true) { // eslint-disable-line no-constant-condition
+	while (dir.split('/').length >= 0) {
 		try {
 			repoListingConfig = {
 				user,
