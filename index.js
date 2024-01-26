@@ -168,7 +168,9 @@ async function init() {
 		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
-		const blob = await isResponseLfs(response.clone()) ? await handleLfs(controller, user, repository, ref, escapeFilepath(file.path)) : await response.blob();
+		const blob = await isResponseLfs(response.clone())
+			? await handleLfs(user, repository, ref, escapeFilepath(file.path), controller.signal) 
+			: await response.blob();
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
