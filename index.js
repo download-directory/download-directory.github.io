@@ -14,6 +14,23 @@ async function maybeResponseLfs(response) {
 	}
 }
 
+async function repoListingSlashblanchSupport(ref, dir, repoListingConfig) {
+	let files;
+	const dirParts = decodeURIComponent(dir).split('/');
+	while (dirParts.length >= 0) {
+		try {
+			files = await listContent.viaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
+			break;
+		} catch {
+			ref += '/' + dirParts.shift();
+			repoListingConfig.directory = dirParts.join('/');
+			repoListingConfig.ref = ref;
+		}
+	}
+
+	return [files, ref, dir, repoListingConfig];
+}
+
 function updateStatus(status, ...extra) {
 	const element = document.querySelector('.status');
 	if (status) {
@@ -133,25 +150,16 @@ async function init() {
 
 	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
-	const repoListingConfig = {
+	let repoListingConfig = {
 		user,
 		repository,
+		ref,
+		directory: decodeURIComponent(dir),
 		token: localStorage.token,
 		getFullData: true,
 	};
 	let files;
-	const dirParts = decodeURIComponent(dir).split('/');
-
-	while (dirParts.length >= 0) {
-		try {
-			files = await listContent.viaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
-			break;
-		} catch {
-			ref += '/' + dirParts.shift();
-			repoListingConfig.directory = dirParts.join('/');
-			repoListingConfig.ref = ref;
-		}
-	}
+	[files, ref, dir, repoListingConfig] = await repoListingSlashblanchSupport(ref, dir, repoListingConfig);
 
 	if (files.length === 0 && files.truncated) {
 		updateStatus('Warning: It’s a large repo and this it take a long while just to download the list of files. You might want to use "git sparse checkout" instead.');
