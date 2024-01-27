@@ -33,7 +33,7 @@ async function repoListingSlashblanchSupport(ref, dir, repoListingConfig) {
 		files = await listContent.viaContentsApi(repoListingConfig);
 	}
 
-	return [files, ref, dir];
+	return [files, ref];
 }
 
 function updateStatus(status, ...extra) {
@@ -164,7 +164,7 @@ async function init() {
 		getFullData: true,
 	};
 	let files;
-	[files, ref, dir] = await repoListingSlashblanchSupport(ref, dir, repoListingConfig);
+	[files, ref] = await repoListingSlashblanchSupport(ref, dir, repoListingConfig);
 
 	if (files.length === 0) {
 		updateStatus('No files to download');
