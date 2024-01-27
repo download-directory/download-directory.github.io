@@ -148,9 +148,8 @@ async function init() {
 			break;
 		} catch {
 			ref += '/' + dirParts.shift();
-			dir = dirParts.join('/');
+			repoListingConfig.directory = dirParts.join('/');
 			repoListingConfig.ref = ref;
-			repoListingConfig.directory = dir;
 		}
 	}
 
