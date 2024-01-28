@@ -21,10 +21,14 @@ async function repoListingSlashblanchSupport(ref, dir, repoListingConfig) {
 		try {
 			files = await listContent.viaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
 			break;
-		} catch {
-			ref += '/' + dirParts.shift();
-			repoListingConfig.directory = dirParts.join('/');
-			repoListingConfig.ref = ref;
+		} catch (error) {
+			if (error.message === 'Not Found') {
+				ref += '/' + dirParts.shift();
+				repoListingConfig.directory = dirParts.join('/');
+				repoListingConfig.ref = ref;
+			} else {
+				throw error;
+			}
 		}
 	}
 
