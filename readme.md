@@ -10,6 +10,10 @@ The download starts automatically when you visit pass the link to the GitHub dir
 
 [**download-directory.github.io**`?url=https://github.com/mrdoob/three.js/tree/dev/build`](https://download-directory.github.io/?url=https://github.com/mrdoob/three.js/tree/dev/build)
 
+You can also specify download filename by adding `filename` parameter, like:
+
+[**download-directory.github.io**`?url=https://github.com/mrdoob/three.js/tree/dev/build&filename=three-js-build`](/?url=https://github.com/mrdoob/three.js/tree/dev/build&filename=three-js-build) to save the file as **three-js-build.zip**.
+
 This is an alternative to the existing [GitZip](https://kinolien.github.io/gitzip/) and [DownGit](https://minhaskamal.github.io/DownGit/) but without the cruft.
 
 ## Related
