@@ -128,7 +128,7 @@ async function init() {
 	let repository;
 	let ref;
 	let dir;
-	let filename; 
+	let filename;
 
 	const input = document.querySelector('#token');
 	if (localStorage.token) {
@@ -143,7 +143,7 @@ async function init() {
 
 	try {
 		const query = new URLSearchParams(location.search);
-		filename = query.get('filename')
+		filename = query.get('filename');
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
@@ -265,10 +265,10 @@ async function init() {
 	});
 
 	const zipFilename = filename
-		? filename.toLowerCase().endsWith(".zip")
+		? (filename.toLowerCase().endsWith('.zip')
 			? filename
-			: filename + ".zip"
-		: `${user} ${repository} ${ref} ${dir}.zip`.replace(/\//, "-");
+			: filename + '.zip')
+		: `${user} ${repository} ${ref} ${dir}.zip`.replace(/\//, '-');
 	await saveFile(zipBlob, zipFilename);
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
