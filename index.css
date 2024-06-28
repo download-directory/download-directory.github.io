@@ -243,3 +243,9 @@ pre {
 pre:first-line {
 	font-size: 20px;
 }
+
+.header {
+	background-color: rgba(100%, 100%, 100%, 13%);
+	padding: 3em;
+	text-align: center;
+}
