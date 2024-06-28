@@ -3,6 +3,8 @@ import listContent from 'list-github-dir-content';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
 
+const isSafeReferrer = globalThis.document?.referrer.startsWith(location.origin);
+
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
@@ -148,6 +150,12 @@ async function init() {
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
 		console.log('Source:', {user, repository, ref, dir});
+
+		if (!isSafeReferrer) {
+			document.querySelector('[name="url"]').value = parsedUrl.href;
+			document.querySelector('.explicit-download').hidden = false;
+			return updateStatus();
+		}
 	} catch {
 		return updateStatus();
 	}
