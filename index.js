@@ -3,6 +3,13 @@ import listContent from 'list-github-dir-content';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
 
+const isSafeReferrer = globalThis.document?.referrer.startsWith(location.origin);
+
+function safetyConfirm() {
+	// eslint-disable-next-line no-alert -- https://github.com/download-directory/download-directory.github.io/issues/112
+	return confirm(`This page is not responsible for the contents downloaded, it only helps you download from third parties. You’re about to download the contents of ${parsedUrl}.`)
+}
+
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
@@ -148,6 +155,10 @@ async function init() {
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
 
 		console.log('Source:', {user, repository, ref, dir});
+
+		if (!isSafeReferrer && !safetyConfirm()) {
+			return updateStatus();
+		}
 	} catch {
 		return updateStatus();
 	}
