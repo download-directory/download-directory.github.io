@@ -5,11 +5,6 @@ import pRetry from 'p-retry';
 
 const isSafeReferrer = globalThis.document?.referrer.startsWith(location.origin);
 
-function safetyConfirm() {
-	// eslint-disable-next-line no-alert -- https://github.com/download-directory/download-directory.github.io/issues/112
-	return confirm(`This page is not responsible for the contents downloaded, it only helps you download from third parties. You’re about to download the contents of ${parsedUrl}.`)
-}
-
 // Matches '/<re/po>/tree/<ref>/<dir>'
 const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
 
@@ -156,7 +151,9 @@ async function init() {
 
 		console.log('Source:', {user, repository, ref, dir});
 
-		if (!isSafeReferrer && !safetyConfirm()) {
+		if (!isSafeReferrer) {
+			document.querySelector('[name="url"]').value = parsedUrl.href;
+			document.querySelector('.explicit-download').hidden = false;
 			return updateStatus();
 		}
 	} catch {
