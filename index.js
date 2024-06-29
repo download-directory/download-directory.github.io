@@ -124,6 +124,8 @@ function escapeFilepath(path) {
 	return path.replaceAll('#', '%23');
 }
 
+const googleDoesntLikeThis = /malware|virus|trojan/i;
+
 async function init() {
 	const zipPromise = getZIP();
 	let user;
@@ -148,6 +150,12 @@ async function init() {
 		filename = query.get('filename');
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
+
+		if (googleDoesntLikeThis.test(parsedUrl)) {
+			updateStatus();
+			updateStatus('Virus, malware, trojans are not allowed');
+			return;
+		}
 
 		console.log('Source:', {user, repository, ref, dir});
 
@@ -182,6 +190,11 @@ async function init() {
 
 	if (files.length === 0) {
 		updateStatus('No files to download');
+		return;
+	}
+
+	if (files.some(file => googleDoesntLikeThis.test(file.path))) {
+		updateStatus('Virus, malware, trojans are not allowed');
 		return;
 	}
 
