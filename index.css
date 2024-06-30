@@ -240,11 +240,12 @@ pre {
 	max-height: 100vh;
 	overflow: auto;
 }
-pre:first-line {
+pre div:first-child {
 	font-size: 20px;
+	white-space: pre-wrap;
 }
 
-.header {
+header {
 	background-color: rgba(100%, 100%, 100%, 13%);
 	padding: 3em;
 	text-align: center;
