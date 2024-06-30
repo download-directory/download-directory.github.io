@@ -244,19 +244,7 @@ pre:first-line {
 	font-size: 20px;
 }
 
-button {
-	font-size: 1.2em;
-	border-radius: 0.6em;
-	background: linear-gradient(to bottom, #fff, #fff9);
-	border: none;
-	color: #234d10;
-	padding: 1em;
-	margin-top: 1em;
-	box-shadow: #10260699 2px 9px 13px;
-	cursor: pointer;
-}
-
-header {
+.header {
 	background-color: rgba(100%, 100%, 100%, 13%);
 	padding: 3em;
 	text-align: center;
