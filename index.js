@@ -3,9 +3,6 @@ import listContent from 'list-github-dir-content';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
 
-// Matches '/<re/po>/tree/<ref>/<dir>'
-const urlParserRegex = /^[/]([^/]+)[/]([^/]+)[/]tree[/]([^/]+)[/](.*)/;
-
 async function maybeResponseLfs(response) {
 	const length = Number(response.headers.get('content-length'));
 	if (length > 128 && length < 140) {
@@ -43,7 +40,9 @@ async function repoListingSlashblanchSupport(ref, dir, repoListingConfig) {
 function updateStatus(status, ...extra) {
 	const element = document.querySelector('.status');
 	if (status) {
-		element.prepend(status + '\n');
+		const wrapper = document.createElement('div');
+		wrapper.textContent = status;
+		element.prepend(wrapper);
 	} else {
 		element.textContent = status || '';
 	}
@@ -90,7 +89,7 @@ async function fetchRepoInfo(repo) {
 		case 403: {
 			// See https://developer.github.com/v3/#rate-limiting
 			if (response.headers.get('X-RateLimit-Remaining') === '0') {
-				updateStatus('⚠ Your token rate limit has been exceeded.', {token: localStorage.token});
+				updateStatus('⚠ Your token rate limit has been exceeded. Please wait or add a token', {token: localStorage.token});
 				throw new Error('Rate limit exceeded');
 			}
 
@@ -130,6 +129,7 @@ async function init() {
 	let repository;
 	let ref;
 	let dir;
+	let type;
 	let filename;
 
 	const input = document.querySelector('#token');
@@ -145,9 +145,15 @@ async function init() {
 
 	try {
 		const query = new URLSearchParams(location.search);
+		const url = query.get('url');
+		if (!url) {
+			return updateStatus();
+		}
+
 		filename = query.get('filename');
-		const parsedUrl = new URL(query.get('url'));
-		[, user, repository, ref, dir] = urlParserRegex.exec(parsedUrl.pathname);
+		const parsedUrl = new URL(url);
+		[, user, repository, type, ref, ...dir] = parsedUrl.pathname.split('/');
+		dir = dir.join('/');
 
 		if (googleDoesntLikeThis.test(parsedUrl)) {
 			updateStatus();
@@ -155,8 +161,33 @@ async function init() {
 			return;
 		}
 
+		if (type !== 'tree' || !ref) {
+			return updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
+		}
+
+		updateStatus(`Repo: ${user}/${repository}\nDirectory: /${dir}`);
 		console.log('Source:', {user, repository, ref, dir});
-	} catch {
+
+		if (dir.length === 0) {
+			if (ref === 'master' || ref === 'main' || ref === 'HEAD') {
+				// This is most likely a branch
+				updateStatus('Downloading the entire repository directly from GitHub');
+				window.location.href = 'https://github.com/' + user + '/' + repository + '/archive/refs/heads/' + ref + '.zip';
+				return;
+			}
+
+			if (/^[0-9a-f]{40}$/.test(ref)) {
+				// This is most likely a commit
+				updateStatus('Downloading the entire repository directly from GitHub');
+				window.location.href = 'https://github.com/' + user + '/' + repository + '/archive/' + ref + '.zip';
+				return;
+			}
+
+			// Undeterminable without an extra API call
+			// https://github.com/download-directory/download-directory.github.io/issues/54#issuecomment-2198433286
+		}
+	} catch (error) {
+		console.error(error);
 		return updateStatus();
 	}
 
@@ -165,7 +196,7 @@ async function init() {
 		throw new Error('You are offline');
 	}
 
-	updateStatus(`Retrieving directory info \nRepo: ${user}/${repository}\nDirectory: /${dir}`);
+	updateStatus('Retrieving directory info');
 
 	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
