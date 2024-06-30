@@ -148,6 +148,7 @@ async function init() {
 		filename = query.get('filename');
 		const parsedUrl = new URL(query.get('url'));
 		[, user, repository, type, ref, ...dir] = parsedUrl.pathname.split('/');
+		dir = dir.join('/');
 
 		if (googleDoesntLikeThis.test(parsedUrl)) {
 			updateStatus();
@@ -155,7 +156,7 @@ async function init() {
 			return;
 		}
 
-		if (type !== 'tree') {
+		if (type !== 'tree' || !ref) {
 			return updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
 		}
 
