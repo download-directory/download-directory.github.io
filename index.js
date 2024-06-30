@@ -89,7 +89,7 @@ async function fetchRepoInfo(repo) {
 		case 403: {
 			// See https://developer.github.com/v3/#rate-limiting
 			if (response.headers.get('X-RateLimit-Remaining') === '0') {
-				updateStatus('⚠ Your token rate limit has been exceeded.', {token: localStorage.token});
+				updateStatus('⚠ Your token rate limit has been exceeded. Please wait or add a token', {token: localStorage.token});
 				throw new Error('Rate limit exceeded');
 			}
 
@@ -145,8 +145,13 @@ async function init() {
 
 	try {
 		const query = new URLSearchParams(location.search);
+		const url = query.get('url');
+		if (!url) {
+			return updateStatus();
+		}
+
 		filename = query.get('filename');
-		const parsedUrl = new URL(query.get('url'));
+		const parsedUrl = new URL(url);
 		[, user, repository, type, ref, ...dir] = parsedUrl.pathname.split('/');
 		dir = dir.join('/');
 
