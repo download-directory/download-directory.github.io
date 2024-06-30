@@ -147,7 +147,7 @@ async function init() {
 		const query = new URLSearchParams(location.search);
 		filename = query.get('filename');
 		const parsedUrl = new URL(query.get('url'));
-		const [, user, repository, type, ref, ...dir] = parsedUrl.pathname.split('/');
+		[, user, repository, type, ref, ...dir] = parsedUrl.pathname.split('/');
 
 		if (googleDoesntLikeThis.test(parsedUrl)) {
 			updateStatus();
