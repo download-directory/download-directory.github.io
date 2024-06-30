@@ -161,16 +161,20 @@ async function init() {
 			return;
 		}
 
-		if (type !== 'tree' || !ref) {
-			updateStatus('Downloading the entire repository directly from GitHub');
-			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball`;
-			return;
+		if (type === 'blob') {
+			return updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
 		}
 
 		updateStatus(`Repo: ${user}/${repository}\nDirectory: /${dir}`);
 		console.log('Source:', {user, repository, ref, dir});
 
-		if (dir.length === 0) {
+		if (!ref) {
+			updateStatus('Downloading the entire repository directly from GitHub');
+			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball`;
+			return;
+		}
+
+		if (!dir) {
 			updateStatus('Downloading the entire repository directly from GitHub');
 			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball/${ref}`;
 			return;
