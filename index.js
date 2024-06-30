@@ -161,7 +161,7 @@ async function init() {
 			return;
 		}
 
-		if (type === 'blob') {
+		if (type && type !== 'tree') {
 			return updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
 		}
 
