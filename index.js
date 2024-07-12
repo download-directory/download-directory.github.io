@@ -152,7 +152,9 @@ async function init() {
 
 		filename = query.get('filename');
 		const parsedUrl = new URL(url);
-		[, user, repository, type, ref, ...dir] = parsedUrl.pathname.split('/');
+		[, user, repository, type, ref, ...dir] = parsedUrl.pathname
+			.replace(/[/]$/, '') // https://github.com/download-directory/download-directory.github.io/issues/98
+			.split('/');
 		dir = dir.join('/');
 
 		if (googleDoesntLikeThis.test(parsedUrl)) {
