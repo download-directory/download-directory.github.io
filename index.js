@@ -161,30 +161,23 @@ async function init() {
 			return;
 		}
 
-		if (type !== 'tree' || !ref) {
+		if (type && type !== 'tree') {
 			return updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
 		}
 
 		updateStatus(`Repo: ${user}/${repository}\nDirectory: /${dir}`);
 		console.log('Source:', {user, repository, ref, dir});
 
-		if (dir.length === 0) {
-			if (ref === 'master' || ref === 'main' || ref === 'HEAD') {
-				// This is most likely a branch
-				updateStatus('Downloading the entire repository directly from GitHub');
-				window.location.href = 'https://github.com/' + user + '/' + repository + '/archive/refs/heads/' + ref + '.zip';
-				return;
-			}
+		if (!ref) {
+			updateStatus('Downloading the entire repository directly from GitHub');
+			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball`;
+			return;
+		}
 
-			if (/^[0-9a-f]{40}$/.test(ref)) {
-				// This is most likely a commit
-				updateStatus('Downloading the entire repository directly from GitHub');
-				window.location.href = 'https://github.com/' + user + '/' + repository + '/archive/' + ref + '.zip';
-				return;
-			}
-
-			// Undeterminable without an extra API call
-			// https://github.com/download-directory/download-directory.github.io/issues/54#issuecomment-2198433286
+		if (!dir) {
+			updateStatus('Downloading the entire repository directly from GitHub');
+			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball/${ref}`;
+			return;
 		}
 	} catch (error) {
 		console.error(error);
