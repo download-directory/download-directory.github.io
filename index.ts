@@ -61,7 +61,7 @@ async function repoListingSlashblanchSupport(
 	return [files, reference];
 }
 
-function updateStatus(status?: string, ...extra: Array<{token?: any; repo?: any; response?: Response} | undefined>) {
+function updateStatus(status?: string, ...extra: Array<{token?: unknown; repo?: unknown; response?: Response} | undefined>) {
 	const element = document.querySelector('.status')!;
 	if (status) {
 		const wrapper = document.createElement('div');
@@ -261,7 +261,7 @@ async function init() {
 
 	const controller = new AbortController();
 
-	const fetchPublicFile = async (file: {path: any}) => {
+	const fetchPublicFile = async (file: {path: string}) => {
 		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
@@ -283,7 +283,7 @@ async function init() {
 		return lfsCompatibleResponse.blob();
 	};
 
-	const fetchPrivateFile = async (file: {url: string | URL | Request; path: any}) => {
+	const fetchPrivateFile = async (file: {url: string; path: string}) => {
 		const response = await fetch(file.url, {
 			headers: {
 				// eslint-disable-next-line @typescript-eslint/naming-convention
