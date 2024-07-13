@@ -8,17 +8,7 @@ import {
 	type GitObject,
 } from 'list-github-dir-content';
 import pMap from 'p-map';
-import pRetry, {type FailedAttemptError} from 'p-retry';
-
-async function maybeResponseLfs(response: Response): Promise<boolean> {
-	const length = Number(response.headers.get('content-length'));
-	if (length > 128 && length < 140) {
-		const contents = await response.clone().text();
-		return contents.startsWith('version https://git-lfs.github.com/spec/v1');
-	}
-
-	return false;
-}
+import {downloadFile} from './download.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -28,17 +18,6 @@ type TreeResult<T> = {
 
 function isError(error: unknown): error is Error {
 	return error instanceof Error;
-}
-
-function getAuthorizationHeader() {
-	const token = localStorage.getItem('token');
-
-	return token ? {
-		headers: {
-		// eslint-disable-next-line @typescript-eslint/naming-convention
-			Authorization: `Bearer ${token}`,
-		},
-	} : {};
 }
 
 async function repoListingSlashblanchSupport(
@@ -158,10 +137,6 @@ async function getZip() {
 	// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/consistent-type-imports
 	const JSZip = await import('jszip') as typeof import('jszip');
 	return new JSZip();
-}
-
-function escapeFilepath(path: string) {
-	return path.replaceAll('#', '%23');
 }
 
 const googleDoesntLikeThis = /malware|virus|trojan/i;
@@ -284,74 +259,31 @@ async function init() {
 	const controller = new AbortController();
 	const signal = controller.signal;
 
-	const fetchPublicFile = async (file: {path: string}) => {
-		const response = await fetch(
-			`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
-			{signal},
-		);
-
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
-		}
-
-		const lfsCompatibleResponse = (await maybeResponseLfs(response))
-			? await fetch(
-				`https://media.githubusercontent.com/media/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
-				{signal},
-			)
-			: response;
-
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
-		}
-
-		return lfsCompatibleResponse.blob();
-	};
-
-	const fetchPrivateFile = async (file: {url: string; path: string}) => {
-		const response = await fetch(file.url, {
-			...getAuthorizationHeader(),
-			signal,
-		});
-
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const {content} = await response.json();
-		const decoder = await fetch(`data:application/octet-stream;base64,${content}`);
-		return decoder.blob();
-	};
-
 	let downloaded = 0;
-
-	const downloadFile = async (file: {url: string; path: string}) => {
-		const localDownload = async () =>
-			repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file);
-		const onFailedAttempt = (error: FailedAttemptError) => {
-			console.error(
-				`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`,
-			);
-		};
-
-		const blob = await pRetry(localDownload, {onFailedAttempt});
-
-		downloaded++;
-		updateStatus(file.path);
-
-		const zip = await zipPromise;
-		zip.file(file.path.replace(directory + '/', ''), blob, {
-			binary: true,
-		});
-	};
 
 	if (repoIsPrivate) {
 		await waitForToken();
 	}
 
 	try {
-		await pMap(files, downloadFile, {concurrency: 20});
+		await pMap(files, async file => {
+			const blob = downloadFile({
+				user,
+				repository,
+				reference,
+				file,
+				repoIsPrivate,
+				signal,
+			});
+
+			downloaded++;
+			updateStatus(file.path);
+
+			const zip = await zipPromise;
+			zip.file(file.path.replace(directory + '/', ''), blob, {
+				binary: true,
+			});
+		}, {concurrency: 20});
 	} catch (error) {
 		controller.abort();
 
