@@ -8,7 +8,7 @@ import {
 	type GitObject,
 } from 'list-github-dir-content';
 import pMap from 'p-map';
-import {downloadFile} from './download.js';
+import {downloadFile, getAuthorizationHeader} from './download.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 

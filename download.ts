@@ -5,7 +5,7 @@ function escapeFilepath(path: string) {
 	return path.replaceAll('#', '%23');
 }
 
-function getAuthorizationHeader() {
+export function getAuthorizationHeader() {
 	const token = localStorage.getItem('token');
 
 	return token
