@@ -2,10 +2,13 @@
 import 'typed-query-selector';
 import saveFile from 'save-file';
 import {
-	getDirectoryContentViaContentsApi, getDirectoryContentViaTreesApi, type ListGithubDirectoryOptions, type GitObject,
+	getDirectoryContentViaContentsApi,
+	getDirectoryContentViaTreesApi,
+	type ListGithubDirectoryOptions,
+	type GitObject,
 } from 'list-github-dir-content';
 import pMap from 'p-map';
-import pRetry from 'p-retry';
+import pRetry, {type FailedAttemptError} from 'p-retry';
 
 async function maybeResponseLfs(response: Response): Promise<boolean> {
 	const length = Number(response.headers.get('content-length'));
@@ -25,6 +28,17 @@ type TreeResult<T> = {
 
 function isError(error: unknown): error is Error {
 	return error instanceof Error;
+}
+
+function getAuthorizationHeader() {
+	const token = localStorage.getItem('token');
+
+	return token ? {
+		headers: {
+		// eslint-disable-next-line @typescript-eslint/naming-convention
+			Authorization: `Bearer ${token}`,
+		},
+	} : {};
 }
 
 async function repoListingSlashblanchSupport(
@@ -61,7 +75,7 @@ async function repoListingSlashblanchSupport(
 	return [files, reference];
 }
 
-function updateStatus(status?: string, ...extra: Array<{token?: unknown; repo?: unknown; response?: Response} | undefined>) {
+function updateStatus(status?: string, ...extra: unknown[]) {
 	const element = document.querySelector('.status')!;
 	if (status) {
 		const wrapper = document.createElement('div');
@@ -97,25 +111,26 @@ async function waitForToken() {
 }
 
 async function fetchRepoInfo(repo: string): Promise<{private: boolean}> {
-	const response = await fetch(`https://api.github.com/repos/${repo}`,
-		localStorage.getItem('token') ? {
-			headers: {
-				// eslint-disable-next-line @typescript-eslint/naming-convention
-				Authorization: `Bearer ${localStorage.getItem('token')}`,
-			},
-		} : {},
+	const response = await fetch(
+		`https://api.github.com/repos/${repo}`,
+		getAuthorizationHeader(),
 	);
 
 	switch (response.status) {
 		case 401: {
-			updateStatus('⚠ The token provided is invalid or has been revoked.', {token: localStorage.getItem('token')});
+			updateStatus('⚠ The token provided is invalid or has been revoked.', {
+				token: localStorage.getItem('token'),
+			});
 			throw new Error('Invalid token');
 		}
 
 		case 403: {
 			// See https://developer.github.com/v3/#rate-limiting
 			if (response.headers.get('X-RateLimit-Remaining') === '0') {
-				updateStatus('⚠ Your token rate limit has been exceeded. Please wait or add a token', {token: localStorage.getItem('token')});
+				updateStatus(
+					'⚠ Your token rate limit has been exceeded. Please wait or add a token',
+					{token: localStorage.getItem('token')},
+				);
 				throw new Error('Rate limit exceeded');
 			}
 
@@ -207,7 +222,10 @@ async function init() {
 
 		updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`);
 		console.log('Source:', {
-			user, repository, ref: reference, dir: directory,
+			user,
+			repository,
+			reference,
+			directory,
 		});
 
 		if (!reference) {
@@ -245,7 +263,11 @@ async function init() {
 		getFullData: true,
 	} as const satisfies ApiOptions;
 	let files: TreeResult<GitObject>;
-	[files, reference] = await repoListingSlashblanchSupport(reference, directory, repoListingConfig);
+	[files, reference] = await repoListingSlashblanchSupport(
+		reference,
+		directory,
+		repoListingConfig,
+	);
 
 	if (files.length === 0) {
 		updateStatus('No files to download');
@@ -260,20 +282,23 @@ async function init() {
 	updateStatus(`Will download ${files.length} files`);
 
 	const controller = new AbortController();
+	const signal = controller.signal;
 
 	const fetchPublicFile = async (file: {path: string}) => {
-		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`, {
-			signal: controller.signal,
-		});
+		const response = await fetch(
+			`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
+			{signal},
+		);
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
 		}
 
-		const lfsCompatibleResponse = await maybeResponseLfs(response)
-			? await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`, {
-				signal: controller.signal,
-			})
+		const lfsCompatibleResponse = (await maybeResponseLfs(response))
+			? await fetch(
+				`https://media.githubusercontent.com/media/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
+				{signal},
+			)
 			: response;
 
 		if (!response.ok) {
@@ -285,11 +310,8 @@ async function init() {
 
 	const fetchPrivateFile = async (file: {url: string; path: string}) => {
 		const response = await fetch(file.url, {
-			headers: {
-				// eslint-disable-next-line @typescript-eslint/naming-convention
-				Authorization: `Bearer ${localStorage.getItem('token')}`,
-			},
-			signal: controller.signal,
+			...getAuthorizationHeader(),
+			signal,
 		});
 
 		if (!response.ok) {
@@ -305,10 +327,12 @@ async function init() {
 	let downloaded = 0;
 
 	const downloadFile = async (file: {url: string; path: string}) => {
-		const localDownload = async () => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file);
-		const onFailedAttempt = (error: {attemptNumber: number;
-			retriesLeft: number;}) => {
-			console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
+		const localDownload = async () =>
+			repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file);
+		const onFailedAttempt = (error: FailedAttemptError) => {
+			console.error(
+				`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`,
+			);
 		};
 
 		const blob = await pRetry(localDownload, {onFailedAttempt});
@@ -336,7 +360,9 @@ async function init() {
 		} else if (isError(error) && error.message.startsWith('HTTP ')) {
 			updateStatus('⚠ Could not download all files.');
 		} else {
-			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
+			updateStatus(
+				'⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.',
+			);
 		}
 
 		throw error;
