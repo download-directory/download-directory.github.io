@@ -384,4 +384,5 @@ async function init() {
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
-await init();
+// eslint-disable-next-line unicorn/prefer-top-level-await -- Not allowed
+void init();
