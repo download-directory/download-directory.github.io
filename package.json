@@ -18,6 +18,7 @@
 		}
 	},
 	"dependencies": {
+		"buffer": "^6.0.3",
 		"jszip": "^3.10.1",
 		"list-github-dir-content": "^4.0.0",
 		"p-map": "^7.0.2",
