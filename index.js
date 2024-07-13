@@ -1,5 +1,5 @@
 import saveFile from 'save-file';
-import listContent from 'list-github-dir-content';
+import {getDirectoryContentViaContentsApi, getDirectoryContentViaTreesApi} from 'list-github-dir-content';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
 
@@ -11,18 +11,18 @@ async function maybeResponseLfs(response) {
 	}
 }
 
-async function repoListingSlashblanchSupport(ref, dir, repoListingConfig) {
+async function repoListingSlashblanchSupport(reference, directory, repoListingConfig) {
 	let files;
-	const dirParts = decodeURIComponent(dir).split('/');
-	while (dirParts.length >= 0) {
+	const directoryParts = decodeURIComponent(directory).split('/');
+	while (directoryParts.length >= 0) {
 		try {
-			files = await listContent.viaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
+			files = await getDirectoryContentViaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
 			break;
 		} catch (error) {
 			if (error.message === 'Not Found') {
-				ref += '/' + dirParts.shift();
-				repoListingConfig.directory = dirParts.join('/');
-				repoListingConfig.ref = ref;
+				reference += '/' + directoryParts.shift();
+				repoListingConfig.directory = directoryParts.join('/');
+				repoListingConfig.ref = reference;
 			} else {
 				throw error;
 			}
@@ -31,10 +31,10 @@ async function repoListingSlashblanchSupport(ref, dir, repoListingConfig) {
 
 	if (files.length === 0 && files.truncated) {
 		updateStatus('Warning: It’s a large repo and this it take a long while just to download the list of files. You might want to use "git sparse checkout" instead.');
-		files = await listContent.viaContentsApi(repoListingConfig);
+		files = await getDirectoryContentViaContentsApi(repoListingConfig);
 	}
 
-	return [files, ref];
+	return [files, reference];
 }
 
 function updateStatus(status, ...extra) {
@@ -127,8 +127,8 @@ async function init() {
 	const zipPromise = getZIP();
 	let user;
 	let repository;
-	let ref;
-	let dir;
+	let reference;
+	let directory;
 	let type;
 	let filename;
 
@@ -152,10 +152,10 @@ async function init() {
 
 		filename = query.get('filename');
 		const parsedUrl = new URL(url);
-		[, user, repository, type, ref, ...dir] = parsedUrl.pathname
+		[, user, repository, type, reference, ...directory] = parsedUrl.pathname
 			.replace(/[/]$/, '') // https://github.com/download-directory/download-directory.github.io/issues/98
 			.split('/');
-		dir = dir.join('/');
+		directory = directory.join('/');
 
 		if (googleDoesntLikeThis.test(parsedUrl)) {
 			updateStatus();
@@ -167,18 +167,20 @@ async function init() {
 			return updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
 		}
 
-		updateStatus(`Repo: ${user}/${repository}\nDirectory: /${dir}`);
-		console.log('Source:', {user, repository, ref, dir});
+		updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`);
+		console.log('Source:', {
+			user, repository, ref: reference, dir: directory,
+		});
 
-		if (!ref) {
+		if (!reference) {
 			updateStatus('Downloading the entire repository directly from GitHub');
 			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball`;
 			return;
 		}
 
-		if (!dir) {
+		if (!directory) {
 			updateStatus('Downloading the entire repository directly from GitHub');
-			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball/${ref}`;
+			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball/${reference}`;
 			return;
 		}
 	} catch (error) {
@@ -198,13 +200,13 @@ async function init() {
 	const repoListingConfig = {
 		user,
 		repository,
-		ref,
-		directory: decodeURIComponent(dir),
+		ref: reference,
+		directory: decodeURIComponent(directory),
 		token: localStorage.token,
 		getFullData: true,
 	};
 	let files;
-	[files, ref] = await repoListingSlashblanchSupport(ref, dir, repoListingConfig);
+	[files, reference] = await repoListingSlashblanchSupport(reference, directory, repoListingConfig);
 
 	if (files.length === 0) {
 		updateStatus('No files to download');
@@ -221,7 +223,7 @@ async function init() {
 	const controller = new AbortController();
 
 	const fetchPublicFile = async file => {
-		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
+		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`, {
 			signal: controller.signal,
 		});
 
@@ -230,7 +232,7 @@ async function init() {
 		}
 
 		const lfsCompatibleResponse = await maybeResponseLfs(response)
-			? await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${ref}/${escapeFilepath(file.path)}`, {
+			? await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`, {
 				signal: controller.signal,
 			})
 			: response;
@@ -273,7 +275,7 @@ async function init() {
 		updateStatus(file.path);
 
 		const zip = await zipPromise;
-		zip.file(file.path.replace(dir + '/', ''), blob, {
+		zip.file(file.path.replace(directory + '/', ''), blob, {
 			binary: true,
 		});
 	};
@@ -307,7 +309,7 @@ async function init() {
 		? (filename.toLowerCase().endsWith('.zip')
 			? filename
 			: filename + '.zip')
-		: `${user} ${repository} ${ref} ${dir}.zip`.replace(/\//, '-');
+		: `${user} ${repository} ${reference} ${directory}.zip`.replace(/\//, '-');
 	await saveFile(zipBlob, zipFilename);
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
