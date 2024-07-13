@@ -1,25 +1,63 @@
+// eslint-disable-next-line import/no-unassigned-import
+import 'typed-query-selector';
 import saveFile from 'save-file';
-import {getDirectoryContentViaContentsApi, getDirectoryContentViaTreesApi} from 'list-github-dir-content';
+import {
+	getDirectoryContentViaContentsApi,
+	getDirectoryContentViaTreesApi,
+	type ListGithubDirectoryOptions,
+	type GitObject,
+} from 'list-github-dir-content';
 import pMap from 'p-map';
-import pRetry from 'p-retry';
+import pRetry, {type FailedAttemptError} from 'p-retry';
 
-async function maybeResponseLfs(response) {
+async function maybeResponseLfs(response: Response): Promise<boolean> {
 	const length = Number(response.headers.get('content-length'));
 	if (length > 128 && length < 140) {
 		const contents = await response.clone().text();
 		return contents.startsWith('version https://git-lfs.github.com/spec/v1');
 	}
+
+	return false;
 }
 
-async function repoListingSlashblanchSupport(reference, directory, repoListingConfig) {
-	let files;
+type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
+
+type TreeResult<T> = {
+	truncated?: boolean;
+} & T[];
+
+function isError(error: unknown): error is Error {
+	return error instanceof Error;
+}
+
+function getAuthorizationHeader() {
+	const token = localStorage.getItem('token');
+
+	return token ? {
+		headers: {
+		// eslint-disable-next-line @typescript-eslint/naming-convention
+			Authorization: `Bearer ${token}`,
+		},
+	} : {};
+}
+
+async function repoListingSlashblanchSupport(
+	reference: string,
+	directory: string,
+	repoListingConfig: ApiOptions,
+): Promise<[TreeResult<GitObject>, string]> {
+	let files: TreeResult<GitObject> = [];
 	const directoryParts = decodeURIComponent(directory).split('/');
 	while (directoryParts.length >= 0) {
 		try {
 			files = await getDirectoryContentViaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
 			break;
 		} catch (error) {
-			if (error.message === 'Not Found') {
+			if (isError(error) && error.message === 'Not Found') {
+				if (directoryParts.length === 0) {
+					throw error;
+				}
+
 				reference += '/' + directoryParts.shift();
 				repoListingConfig.directory = directoryParts.join('/');
 				repoListingConfig.ref = reference;
@@ -37,29 +75,30 @@ async function repoListingSlashblanchSupport(reference, directory, repoListingCo
 	return [files, reference];
 }
 
-function updateStatus(status, ...extra) {
-	const element = document.querySelector('.status');
+function updateStatus(status?: string, ...extra: unknown[]) {
+	const element = document.querySelector('.status')!;
 	if (status) {
 		const wrapper = document.createElement('div');
 		wrapper.textContent = status;
 		element.prepend(wrapper);
 	} else {
-		element.textContent = status || '';
+		element.textContent = status ?? '';
 	}
 
 	console.log(status, ...extra);
 }
 
 async function waitForToken() {
-	const input = document.querySelector('#token');
+	const input = document.querySelector('input#token')!;
 
-	if (localStorage.token) {
-		input.value = localStorage.token;
+	const token = localStorage.getItem('token');
+	if (token) {
+		input.value = token!;
 	} else {
-		const toggle = document.querySelector('#token-toggle');
+		const toggle = document.querySelector('input#token-toggle')!;
 		toggle.checked = true;
 		updateStatus('Waiting for token…');
-		await new Promise(resolve => {
+		await new Promise<void>(resolve => {
 			input.addEventListener('input', function handler() {
 				if (input.checkValidity()) {
 					toggle.checked = false;
@@ -71,25 +110,27 @@ async function waitForToken() {
 	}
 }
 
-async function fetchRepoInfo(repo) {
-	const response = await fetch(`https://api.github.com/repos/${repo}`,
-		localStorage.token ? {
-			headers: {
-				Authorization: `Bearer ${localStorage.token}`,
-			},
-		} : {},
+async function fetchRepoInfo(repo: string): Promise<{private: boolean}> {
+	const response = await fetch(
+		`https://api.github.com/repos/${repo}`,
+		getAuthorizationHeader(),
 	);
 
 	switch (response.status) {
 		case 401: {
-			updateStatus('⚠ The token provided is invalid or has been revoked.', {token: localStorage.token});
+			updateStatus('⚠ The token provided is invalid or has been revoked.', {
+				token: localStorage.getItem('token'),
+			});
 			throw new Error('Invalid token');
 		}
 
 		case 403: {
 			// See https://developer.github.com/v3/#rate-limiting
 			if (response.headers.get('X-RateLimit-Remaining') === '0') {
-				updateStatus('⚠ Your token rate limit has been exceeded. Please wait or add a token', {token: localStorage.token});
+				updateStatus(
+					'⚠ Your token rate limit has been exceeded. Please wait or add a token',
+					{token: localStorage.getItem('token')},
+				);
 				throw new Error('Rate limit exceeded');
 			}
 
@@ -109,37 +150,42 @@ async function fetchRepoInfo(repo) {
 		throw new Error('Fetch error');
 	}
 
-	return response.json();
+	return response.json() as Promise<{private: boolean}>;
 }
 
-async function getZIP() {
-	const JSZip = await import('jszip');
+async function getZip() {
+	// @ts-expect-error idk idc
+	// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/consistent-type-imports
+	const JSZip = await import('jszip') as typeof import('jszip');
 	return new JSZip();
 }
 
-function escapeFilepath(path) {
+function escapeFilepath(path: string) {
 	return path.replaceAll('#', '%23');
 }
 
 const googleDoesntLikeThis = /malware|virus|trojan/i;
 
+// eslint-disable-next-line complexity
 async function init() {
-	const zipPromise = getZIP();
-	let user;
-	let repository;
-	let reference;
-	let directory;
-	let type;
-	let filename;
+	const zipPromise = getZip();
+	let user: string | undefined;
+	let repository: string | undefined;
+	let reference: string | undefined;
+	let directory: string | string[];
+	let type: string | undefined;
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	let filename: string | null;
 
-	const input = document.querySelector('#token');
-	if (localStorage.token) {
-		input.value = localStorage.token;
+	const input = document.querySelector('input#token')!;
+	const token = localStorage.getItem('token');
+	if (token) {
+		input.value = token;
 	}
 
 	input.addEventListener('input', () => {
 		if (input.checkValidity()) {
-			localStorage.token = input.value;
+			localStorage.setItem('token', input.value);
 		}
 	});
 
@@ -147,7 +193,8 @@ async function init() {
 		const query = new URLSearchParams(location.search);
 		const url = query.get('url');
 		if (!url) {
-			return updateStatus();
+			updateStatus();
+			return;
 		}
 
 		filename = query.get('filename');
@@ -157,19 +204,28 @@ async function init() {
 			.split('/');
 		directory = directory.join('/');
 
-		if (googleDoesntLikeThis.test(parsedUrl)) {
+		if (!user || !repository) {
+			updateStatus();
+			return;
+		}
+
+		if (googleDoesntLikeThis.test(url)) {
 			updateStatus();
 			updateStatus('Virus, malware, trojans are not allowed');
 			return;
 		}
 
 		if (type && type !== 'tree') {
-			return updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
+			updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
+			return;
 		}
 
 		updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`);
 		console.log('Source:', {
-			user, repository, ref: reference, dir: directory,
+			user,
+			repository,
+			reference,
+			directory,
 		});
 
 		if (!reference) {
@@ -185,7 +241,8 @@ async function init() {
 		}
 	} catch (error) {
 		console.error(error);
-		return updateStatus();
+		updateStatus();
+		return;
 	}
 
 	if (!navigator.onLine) {
@@ -202,11 +259,15 @@ async function init() {
 		repository,
 		ref: reference,
 		directory: decodeURIComponent(directory),
-		token: localStorage.token,
+		token: localStorage.getItem('token') ?? undefined,
 		getFullData: true,
-	};
-	let files;
-	[files, reference] = await repoListingSlashblanchSupport(reference, directory, repoListingConfig);
+	} as const satisfies ApiOptions;
+	let files: TreeResult<GitObject>;
+	[files, reference] = await repoListingSlashblanchSupport(
+		reference,
+		directory,
+		repoListingConfig,
+	);
 
 	if (files.length === 0) {
 		updateStatus('No files to download');
@@ -221,20 +282,23 @@ async function init() {
 	updateStatus(`Will download ${files.length} files`);
 
 	const controller = new AbortController();
+	const signal = controller.signal;
 
-	const fetchPublicFile = async file => {
-		const response = await fetch(`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`, {
-			signal: controller.signal,
-		});
+	const fetchPublicFile = async (file: {path: string}) => {
+		const response = await fetch(
+			`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
+			{signal},
+		);
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
 		}
 
-		const lfsCompatibleResponse = await maybeResponseLfs(response)
-			? await fetch(`https://media.githubusercontent.com/media/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`, {
-				signal: controller.signal,
-			})
+		const lfsCompatibleResponse = (await maybeResponseLfs(response))
+			? await fetch(
+				`https://media.githubusercontent.com/media/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
+				{signal},
+			)
 			: response;
 
 		if (!response.ok) {
@@ -244,18 +308,17 @@ async function init() {
 		return lfsCompatibleResponse.blob();
 	};
 
-	const fetchPrivateFile = async file => {
+	const fetchPrivateFile = async (file: {url: string; path: string}) => {
 		const response = await fetch(file.url, {
-			headers: {
-				Authorization: `Bearer ${localStorage.token}`,
-			},
-			signal: controller.signal,
+			...getAuthorizationHeader(),
+			signal,
 		});
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.statusText} for ${file.path}`);
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const {content} = await response.json();
 		const decoder = await fetch(`data:application/octet-stream;base64,${content}`);
 		return decoder.blob();
@@ -263,10 +326,13 @@ async function init() {
 
 	let downloaded = 0;
 
-	const downloadFile = async file => {
-		const localDownload = () => repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file);
-		const onFailedAttempt = error => {
-			console.error(`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`);
+	const downloadFile = async (file: {url: string; path: string}) => {
+		const localDownload = async () =>
+			repoIsPrivate ? fetchPrivateFile(file) : fetchPublicFile(file);
+		const onFailedAttempt = (error: FailedAttemptError) => {
+			console.error(
+				`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`,
+			);
 		};
 
 		const blob = await pRetry(localDownload, {onFailedAttempt});
@@ -284,19 +350,23 @@ async function init() {
 		await waitForToken();
 	}
 
-	await pMap(files, downloadFile, {concurrency: 20}).catch(error => {
+	try {
+		await pMap(files, downloadFile, {concurrency: 20});
+	} catch (error) {
 		controller.abort();
 
 		if (!navigator.onLine) {
 			updateStatus('⚠ Could not download all files, network connection lost.');
-		} else if (error.message.startsWith('HTTP ')) {
+		} else if (isError(error) && error.message.startsWith('HTTP ')) {
 			updateStatus('⚠ Could not download all files.');
 		} else {
-			updateStatus('⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.');
+			updateStatus(
+				'⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.',
+			);
 		}
 
 		throw error;
-	});
+	}
 
 	updateStatus(`Zipping ${downloaded} files`);
 
@@ -314,5 +384,5 @@ async function init() {
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
-// eslint-disable-next-line unicorn/prefer-top-level-await -- I like having an `init` function since there's a lot of code in this file
-init();
+// eslint-disable-next-line unicorn/prefer-top-level-await -- Not allowed
+void init();
