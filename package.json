@@ -25,10 +25,8 @@
 		"save-file": "^2.3.1"
 	},
 	"devDependencies": {
-		"buffer": "^6.0.3",
 		"parcel": "^2.12.0",
 		"parcel-resolver-ignore": "^2.2.0",
-		"process": "^0.11.10",
 		"xo": "^0.58.0"
 	},
 	"parcelIgnore": [
