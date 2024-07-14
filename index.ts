@@ -11,7 +11,7 @@ import {
 import pMap from 'p-map';
 import {downloadFile} from './download.js';
 import parseUrl from './parse-url.js';
-import authorizedFetch from './authorized-fetch.js';
+import authenticatedFetch from './authenticated-fetch.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -68,7 +68,7 @@ async function waitForToken() {
 }
 
 async function fetchRepoInfo(repo: string): Promise<{private: boolean}> {
-	const response = await authorizedFetch(
+	const response = await authenticatedFetch(
 		`https://api.github.com/repos/${repo}`,
 	);
 

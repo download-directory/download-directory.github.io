@@ -1,6 +1,6 @@
 import {type ContentsReponseObject, type TreeResponseObject} from 'list-github-dir-content';
 import pRetry, {type FailedAttemptError} from 'p-retry';
-import authorizedFetch from './authorized-fetch.js';
+import authenticatedFetch from './authenticated-fetch.js';
 
 function escapeFilepath(path: string) {
 	return path.replaceAll('#', '%23');
@@ -31,7 +31,7 @@ async function fetchPublicFile({
 	file,
 	signal,
 }: FileRequest) {
-	const response = await authorizedFetch(
+	const response = await authenticatedFetch(
 		`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
 		{signal},
 	);
@@ -41,7 +41,7 @@ async function fetchPublicFile({
 	}
 
 	const lfsCompatibleResponse = (await maybeResponseLfs(response))
-		? await authorizedFetch(
+		? await authenticatedFetch(
 			`https://media.githubusercontent.com/media/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
 			{signal},
 		)
@@ -58,7 +58,7 @@ async function fetchPrivateFile({
 	file,
 	signal,
 }: FileRequest) {
-	const response = await authorizedFetch(file.url, {signal});
+	const response = await authenticatedFetch(file.url, {signal});
 
 	if (!response.ok) {
 		throw new Error(`HTTP ${response.statusText} for ${file.path}`);

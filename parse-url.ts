@@ -1,4 +1,4 @@
-import authorizedFetch from './authorized-fetch.js';
+import authenticatedFetch from './authenticated-fetch.js';
 
 function cleanUrl(url: string) {
 	return url
@@ -86,6 +86,6 @@ export default async function parseUrl(
 
 async function checkBranchExists(user: string, repo: string, gitReference: string): Promise<boolean> {
 	const apiUrl = `https://api.github.com/repos/${user}/${repo}/branches/${gitReference}`;
-	const response = await authorizedFetch(apiUrl);
+	const response = await authenticatedFetch(apiUrl);
 	return response.ok;
 }

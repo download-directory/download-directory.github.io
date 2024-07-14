@@ -1,4 +1,4 @@
-export default async function authorizedFetch(
+export default async function authenticatedFetch(
 	url: string,
 	{signal}: {signal?: AbortSignal} = {},
 ): Promise<Response> {
