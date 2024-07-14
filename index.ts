@@ -9,8 +9,9 @@ import {
 	type ContentsReponseObject,
 } from 'list-github-dir-content';
 import pMap from 'p-map';
-import {downloadFile, getAuthorizationHeader} from './download.js';
+import {downloadFile} from './download.js';
 import parseUrl from './parse-url.js';
+import authorizedFetch from './authorized-fetch.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -67,9 +68,8 @@ async function waitForToken() {
 }
 
 async function fetchRepoInfo(repo: string): Promise<{private: boolean}> {
-	const response = await fetch(
+	const response = await authorizedFetch(
 		`https://api.github.com/repos/${repo}`,
-		getAuthorizationHeader(),
 	);
 
 	switch (response.status) {
@@ -184,16 +184,14 @@ async function init() {
 
 	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
-	const repoListingConfig = {
+	const files = await listFiles({
 		user,
 		repository,
 		ref: gitReference,
 		directory,
 		token: localStorage.getItem('token') ?? undefined,
 		getFullData: true,
-	} as const satisfies ApiOptions;
-
-	const files = await listFiles(repoListingConfig);
+	});
 
 	if (files.length === 0) {
 		updateStatus('No files to download');

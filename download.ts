@@ -1,21 +1,9 @@
 import {type ContentsReponseObject, type TreeResponseObject} from 'list-github-dir-content';
 import pRetry, {type FailedAttemptError} from 'p-retry';
+import authorizedFetch from './authorized-fetch.js';
 
 function escapeFilepath(path: string) {
 	return path.replaceAll('#', '%23');
-}
-
-export function getAuthorizationHeader() {
-	const token = localStorage.getItem('token');
-
-	return token
-		? {
-			headers: {
-				// eslint-disable-next-line @typescript-eslint/naming-convention
-				Authorization: `Bearer ${token}`,
-			},
-		}
-		: {};
 }
 
 async function maybeResponseLfs(response: Response): Promise<boolean> {
@@ -43,7 +31,7 @@ async function fetchPublicFile({
 	file,
 	signal,
 }: FileRequest) {
-	const response = await fetch(
+	const response = await authorizedFetch(
 		`https://raw.githubusercontent.com/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
 		{signal},
 	);
@@ -53,7 +41,7 @@ async function fetchPublicFile({
 	}
 
 	const lfsCompatibleResponse = (await maybeResponseLfs(response))
-		? await fetch(
+		? await authorizedFetch(
 			`https://media.githubusercontent.com/media/${user}/${repository}/${reference}/${escapeFilepath(file.path)}`,
 			{signal},
 		)
@@ -70,10 +58,7 @@ async function fetchPrivateFile({
 	file,
 	signal,
 }: FileRequest) {
-	const response = await fetch(file.url, {
-		...getAuthorizationHeader(),
-		signal,
-	});
+	const response = await authorizedFetch(file.url, {signal});
 
 	if (!response.ok) {
 		throw new Error(`HTTP ${response.statusText} for ${file.path}`);
