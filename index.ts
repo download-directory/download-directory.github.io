@@ -5,7 +5,8 @@ import {
 	getDirectoryContentViaContentsApi,
 	getDirectoryContentViaTreesApi,
 	type ListGithubDirectoryOptions,
-	type GitObject,
+	type TreeResponseObject,
+	type ContentsReponseObject,
 } from 'list-github-dir-content';
 import pMap from 'p-map';
 import {downloadFile, getAuthorizationHeader} from './download.js';
@@ -19,7 +20,7 @@ function isError(error: unknown): error is Error {
 
 async function listFiles(
 	repoListingConfig: ApiOptions,
-): Promise<GitObject[]> {
+): Promise<Array<TreeResponseObject | ContentsReponseObject>> {
 	const files = await getDirectoryContentViaTreesApi(repoListingConfig);
 
 	if (!files.truncated) {

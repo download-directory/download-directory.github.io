@@ -60,4 +60,12 @@ test('parse-url', async () => {
 		  "user": "fregante",
 		}
 	`);
+	await expect(parseUrl('https://github.com/wesbos/JavaScript30/tree/master/01%20-%20JavaScript%20Drum%20Kit/sounds')).resolves.toMatchInlineSnapshot(`
+		{
+		  "directory": "01 - JavaScript Drum Kit/sounds",
+		  "gitReference": "master",
+		  "repository": "JavaScript30",
+		  "user": "wesbos",
+		}
+	`);
 });
