@@ -37,8 +37,8 @@ test('getRepositoryInfo', async () => {
 		{
 		  "directory": "",
 		  "gitReference": "branch/with/slashes",
-		  "repository": "sandbox",
 		  "isPrivate": false,
+		  "repository": "sandbox",
 		  "user": "refined-github",
 		}
 	`);
