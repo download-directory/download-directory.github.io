@@ -3,7 +3,6 @@
 	--line-height: 1.7;
 	--light-green: #2c5700;
 	--dark-green: #153d20;
-	--red: #570a00;
 	color-scheme: dark;
 }
 
@@ -225,8 +224,8 @@ label {
 	border: 0.1em solid;
 }
 #token:invalid {
-	color: var(--red);
-	border: 0.1em solid;
+	outline: solid 0.3em #ffee00;
+	border-color: transparent;
 }
 [name="url"] {
 	font-size: 0.6em;
