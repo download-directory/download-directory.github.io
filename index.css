@@ -3,6 +3,7 @@
 	--line-height: 1.7;
 	--light-green: #2c5700;
 	--dark-green: #153d20;
+	--red: #570a00;
 	color-scheme: dark;
 }
 
@@ -205,6 +206,7 @@ input[type="url"],
 	text-align: center;
 	max-width: 100%;
 }
+
 a,
 label {
 	cursor: pointer;
@@ -219,11 +221,11 @@ label {
 	display: none;
 }
 #token:valid {
-	color: var(--github-green);
+	color: var(--green);
 	border: 0.1em solid;
 }
 #token:invalid {
-	color: var(--github-red);
+	color: var(--red);
 	border: 0.1em solid;
 }
 [name="url"] {

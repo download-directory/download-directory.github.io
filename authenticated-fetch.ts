@@ -3,7 +3,8 @@ export default async function authenticatedFetch(
 	{signal}: {signal?: AbortSignal} = {},
 ): Promise<Response> {
 	const token = globalThis.localStorage?.getItem('token');
-	return fetch(url, {
+
+	const response = await fetch(url, {
 		...(token
 			? {
 				headers: {
@@ -14,4 +15,24 @@ export default async function authenticatedFetch(
 			: {}),
 		signal,
 	});
+
+	switch (response.status) {
+		case 401: {
+			throw new Error('Invalid token');
+		}
+
+		case 403:
+		case 429: {
+			// See https://developer.github.com/v3/#rate-limiting
+			if (response.headers.get('X-RateLimit-Remaining') === '0') {
+				throw new Error('Rate limit exceeded');
+			}
+
+			break;
+		}
+
+		default:
+	}
+
+	return response;
 }
