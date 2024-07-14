@@ -11,7 +11,7 @@ test('downloadFile', async () => {
 			path: '.github/workflows/wait-for-checks.yml',
 		} as unknown as TreeResponseObject,
 		signal: new AbortController().signal,
-		repoIsPrivate: false,
+		isPrivate: false,
 	})).resolves.toBeInstanceOf(Blob);
 });
 
@@ -25,6 +25,6 @@ test.skip('downloadFile private', async () => {
 			path: '.github/workflows/wait-for-checks.yml',
 		} as unknown as TreeResponseObject,
 		signal: new AbortController().signal,
-		repoIsPrivate: true,
+		isPrivate: true,
 	})).resolves.toBeInstanceOf(Blob);
 });

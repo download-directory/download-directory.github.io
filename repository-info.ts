@@ -23,7 +23,7 @@ async function parsePath(
 	}
 }
 
-export default async function parseUrl(
+export default async function getRepositoryInfo(
 	url: string,
 ): Promise<
 	| {error: string}
@@ -33,12 +33,14 @@ export default async function parseUrl(
 		gitReference?: string;
 		directory: string;
 		downloadUrl: string;
+		isPrivate: boolean;
 	}
 	| {
 		user: string;
 		repository: string;
 		gitReference: string;
 		directory: string;
+		isPrivate: boolean;
 	}
 	> {
 	const [, user, repository, type, ...parts] = cleanUrl(
@@ -53,11 +55,22 @@ export default async function parseUrl(
 		return {error: 'NOT_A_DIRECTORY'};
 	}
 
+	const repoInfoResponse = await authenticatedFetch(
+		`https://api.github.com/repos/${user}/${repository}`,
+	);
+
+	if (repoInfoResponse.status === 404) {
+		return {error: 'REPOSITORY_NOT_FOUND'};
+	}
+
+	const {private: isPrivate} = await repoInfoResponse.json() as {private: boolean};
+
 	if (parts.length === 0) {
 		return {
 			user,
 			repository,
 			directory: '',
+			isPrivate,
 			downloadUrl: `https://api.github.com/repos/${user}/${repository}/zipball`,
 		};
 	}
@@ -68,6 +81,7 @@ export default async function parseUrl(
 			repository,
 			gitReference: parts[0],
 			directory: '',
+			isPrivate,
 			downloadUrl: `https://api.github.com/repos/${user}/${repository}/zipball/${parts[0]}`,
 		};
 	}
@@ -80,6 +94,7 @@ export default async function parseUrl(
 	return {
 		user,
 		repository,
+		isPrivate,
 		...parsedPath,
 	};
 }
