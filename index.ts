@@ -9,8 +9,9 @@ import {
 	type ContentsReponseObject,
 } from 'list-github-dir-content';
 import pMap from 'p-map';
-import {downloadFile, getAuthorizationHeader} from './download.js';
+import {downloadFile} from './download.js';
 import parseUrl from './parse-url.js';
+import authenticatedFetch from './authenticated-fetch.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -61,44 +62,18 @@ async function waitForToken() {
 					resolve();
 					input.removeEventListener('input', handler);
 				}
-			});
+			}, {passive: true});
 		});
 	}
 }
 
 async function fetchRepoInfo(repo: string): Promise<{private: boolean}> {
-	const response = await fetch(
+	const response = await authenticatedFetch(
 		`https://api.github.com/repos/${repo}`,
-		getAuthorizationHeader(),
 	);
-
-	switch (response.status) {
-		case 401: {
-			updateStatus('⚠ The token provided is invalid or has been revoked.', {
-				token: localStorage.getItem('token'),
-			});
-			throw new Error('Invalid token');
-		}
-
-		case 403: {
-			// See https://developer.github.com/v3/#rate-limiting
-			if (response.headers.get('X-RateLimit-Remaining') === '0') {
-				updateStatus(
-					'⚠ Your token rate limit has been exceeded. Please wait or add a token',
-					{token: localStorage.getItem('token')},
-				);
-				throw new Error('Rate limit exceeded');
-			}
-
-			break;
-		}
-
-		case 404: {
-			updateStatus('⚠ Repository was not found.', {repo});
-			throw new Error('Repository not found');
-		}
-
-		default:
+	if (response.status === 404) {
+		updateStatus('⚠ Repository was not found. If it’s private, you should enter a token that can access it.', {repo});
+		throw new Error('Repository not found');
 	}
 
 	if (!response.ok) {
@@ -119,6 +94,7 @@ async function getZip() {
 const googleDoesntLikeThis = /malware|virus|trojan/i;
 
 async function init() {
+	updateStatus();
 	const zipPromise = getZip();
 
 	const input = document.querySelector('input#token')!;
@@ -128,20 +104,16 @@ async function init() {
 	}
 
 	input.addEventListener('input', () => {
-		if (input.checkValidity()) {
-			localStorage.setItem('token', input.value);
-		}
-	});
+		localStorage.setItem('token', input.value);
+	}, {passive: true});
 
 	const query = new URLSearchParams(location.search);
 	const url = query.get('url');
 	if (!url) {
-		updateStatus();
 		return;
 	}
 
 	if (googleDoesntLikeThis.test(url)) {
-		updateStatus();
 		updateStatus('Virus, malware, trojans are not allowed');
 		return;
 	}
@@ -166,12 +138,13 @@ async function init() {
 	}
 
 	const {user, repository, gitReference, directory} = parsedPath;
-	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`);
-	console.log('Source:', {
-		user,
-		repository,
-		gitReference,
-		directory,
+	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`, {
+		source: {
+			user,
+			repository,
+			gitReference,
+			directory,
+		},
 	});
 
 	if ('downloadUrl' in parsedPath) {
@@ -184,16 +157,14 @@ async function init() {
 
 	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
-	const repoListingConfig = {
+	const files = await listFiles({
 		user,
 		repository,
 		ref: gitReference,
 		directory,
 		token: localStorage.getItem('token') ?? undefined,
 		getFullData: true,
-	} as const satisfies ApiOptions;
-
-	const files = await listFiles(repoListingConfig);
+	});
 
 	if (files.length === 0) {
 		updateStatus('No files to download');
@@ -211,10 +182,6 @@ async function init() {
 	const signal = controller.signal;
 
 	let downloaded = 0;
-
-	if (repoIsPrivate) {
-		await waitForToken();
-	}
 
 	try {
 		await pMap(files, async file => {
@@ -269,4 +236,28 @@ async function init() {
 }
 
 // eslint-disable-next-line unicorn/prefer-top-level-await -- Not allowed
-void init();
+void init().catch(error => {
+	if (error instanceof Error) {
+		switch (error.message) {
+			case 'Invalid token': {
+				updateStatus('⚠ The token provided is invalid or has been revoked.', {
+					token: localStorage.getItem('token'),
+				});
+				break;
+			}
+
+			case 'Rate limit exceeded': {
+				updateStatus(
+					'⚠ Your token rate limit has been exceeded. Please wait or add a token',
+					{token: localStorage.getItem('token')},
+				);
+				break;
+			}
+
+			default: {
+				updateStatus(`⚠ ${error.message}`, error);
+				break;
+			}
+		}
+	}
+});

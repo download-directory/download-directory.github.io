@@ -1,3 +1,5 @@
+import authenticatedFetch from './authenticated-fetch.js';
+
 function cleanUrl(url: string) {
 	return url
 		.replace(/[/]{2,}/, '/') // Drop double slashes
@@ -84,6 +86,6 @@ export default async function parseUrl(
 
 async function checkBranchExists(user: string, repo: string, gitReference: string): Promise<boolean> {
 	const apiUrl = `https://api.github.com/repos/${user}/${repo}/branches/${gitReference}`;
-	const response = await fetch(apiUrl);
+	const response = await authenticatedFetch(apiUrl);
 	return response.ok;
 }
