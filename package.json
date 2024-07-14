@@ -2,14 +2,18 @@
 	"name": "download-directory",
 	"private": true,
 	"license": "MIT",
-	"source": "index.html",
 	"type": "module",
+	"source": "index.html",
 	"scripts": {
 		"build": "parcel build --dist-dir public --no-scope-hoist",
 		"fix": "xo --fix",
-		"test": "xo && npm run build",
-		"watch": "parcel serve --dist-dir public",
-		"watch:typescript": "tsc --watch --noEmit"
+		"test": "run-p lint build test:*",
+		"test:vitest": "vitest run",
+		"lint": "xo",
+		"watch": "run-p watch:*",
+		"watch:build": "parcel serve --dist-dir public",
+		"watch:typescript": "tsc --watch --noEmit",
+		"watch:vitest": "vitest watch"
 	},
 	"xo": {
 		"envs": [
@@ -29,10 +33,12 @@
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^6.0.0",
 		"buffer": "^6.0.3",
+		"npm-run-all": "^4.1.5",
 		"parcel": "^2.12.0",
 		"parcel-resolver-ignore": "^2.2.0",
 		"process": "^0.11.10",
 		"typed-query-selector": "^2.11.2",
+		"vitest": "^2.0.2",
 		"xo": "^0.58.0"
 	},
 	"parcelIgnore": [

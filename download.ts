@@ -111,7 +111,7 @@ export async function downloadFile({
 			: fetchPublicFile(fileRequest);
 	const onFailedAttempt = (error: FailedAttemptError) => {
 		console.error(
-			`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`,
+			`Error downloading ${file.path}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`,
 		);
 	};
 
