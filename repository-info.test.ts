@@ -28,6 +28,7 @@ test('getRepositoryInfo', async () => {
 		  "directory": "",
 		  "downloadUrl": "https://api.github.com/repos/refined-github/sandbox/zipball/durian",
 		  "gitReference": "durian",
+		  "isPrivate": false,
 		  "repository": "sandbox",
 		  "user": "refined-github",
 		}
@@ -37,6 +38,7 @@ test('getRepositoryInfo', async () => {
 		  "directory": "",
 		  "gitReference": "branch/with/slashes",
 		  "repository": "sandbox",
+		  "isPrivate": false,
 		  "user": "refined-github",
 		}
 	`);
@@ -44,6 +46,7 @@ test('getRepositoryInfo', async () => {
 		{
 		  "directory": ".github/workflows",
 		  "gitReference": "default-a",
+		  "isPrivate": false,
 		  "repository": "sandbox",
 		  "user": "refined-github",
 		}
@@ -52,6 +55,7 @@ test('getRepositoryInfo', async () => {
 		{
 		  "directory": "",
 		  "downloadUrl": "https://api.github.com/repos/microsoft/typescript/zipball",
+		  "isPrivate": false,
 		  "repository": "typescript",
 		  "user": "microsoft",
 		}
@@ -61,6 +65,7 @@ test('getRepositoryInfo', async () => {
 		  "directory": "",
 		  "downloadUrl": "https://api.github.com/repos/fregante/doma/zipball/develop",
 		  "gitReference": "develop",
+		  "isPrivate": false,
 		  "repository": "doma",
 		  "user": "fregante",
 		}
@@ -69,6 +74,7 @@ test('getRepositoryInfo', async () => {
 		{
 		  "directory": "01 - JavaScript Drum Kit/sounds",
 		  "gitReference": "master",
+		  "isPrivate": false,
 		  "repository": "JavaScript30",
 		  "user": "wesbos",
 		}
