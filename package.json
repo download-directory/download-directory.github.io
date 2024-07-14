@@ -5,7 +5,9 @@
 	"type": "module",
 	"source": "index.html",
 	"scripts": {
-		"build": "parcel build --dist-dir public --no-scope-hoist",
+		"build": "run-s build:*",
+		"build:bundle": "parcel build --dist-dir public --no-scope-hoist",
+		"build:typescript": "tsc --noEmit",
 		"fix": "xo --fix",
 		"test": "run-p lint build test:*",
 		"test:vitest": "vitest run",
