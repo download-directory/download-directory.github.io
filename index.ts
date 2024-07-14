@@ -17,7 +17,7 @@ function isError(error: unknown): error is Error {
 	return error instanceof Error;
 }
 
-async function repoListingSlashblanchSupport(
+async function listFiles(
 	repoListingConfig: ApiOptions,
 ): Promise<GitObject[]> {
 	const files = await getDirectoryContentViaTreesApi(repoListingConfig);
@@ -192,7 +192,7 @@ async function init() {
 		getFullData: true,
 	} as const satisfies ApiOptions;
 
-	const files = await repoListingSlashblanchSupport(repoListingConfig);
+	const files = await listFiles(repoListingConfig);
 
 	if (files.length === 0) {
 		updateStatus('No files to download');

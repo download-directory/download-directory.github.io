@@ -40,9 +40,8 @@ export default async function parseUrl(
 	}
 	> {
 	const [, user, repository, type, ...parts] = cleanUrl(
-		new URL(url).pathname,
+		decodeURIComponent(new URL(url).pathname),
 	).split('/');
-	// TODO: run decodeURIComponent before splitting the parts
 
 	if (!user || !repository) {
 		return {error: 'NOT_A_REPOSITORY'};
