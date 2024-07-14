@@ -9,49 +9,25 @@ import {
 } from 'list-github-dir-content';
 import pMap from 'p-map';
 import {downloadFile, getAuthorizationHeader} from './download.js';
+import parseUrl from './parse-url.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
-
-type TreeResult<T> = {
-	truncated?: boolean;
-} & T[];
 
 function isError(error: unknown): error is Error {
 	return error instanceof Error;
 }
 
 async function repoListingSlashblanchSupport(
-	reference: string,
-	directory: string,
 	repoListingConfig: ApiOptions,
-): Promise<[TreeResult<GitObject>, string]> {
-	let files: TreeResult<GitObject> = [];
-	const directoryParts = decodeURIComponent(directory).split('/');
-	while (directoryParts.length >= 0) {
-		try {
-			files = await getDirectoryContentViaTreesApi(repoListingConfig); // eslint-disable-line no-await-in-loop
-			break;
-		} catch (error) {
-			if (isError(error) && error.message === 'Not Found') {
-				if (directoryParts.length === 0) {
-					throw error;
-				}
+): Promise<GitObject[]> {
+	const files = await getDirectoryContentViaTreesApi(repoListingConfig);
 
-				reference += '/' + directoryParts.shift();
-				repoListingConfig.directory = directoryParts.join('/');
-				repoListingConfig.ref = reference;
-			} else {
-				throw error;
-			}
-		}
+	if (!files.truncated) {
+		return files;
 	}
 
-	if (files.length === 0 && files.truncated) {
-		updateStatus('Warning: It’s a large repo and this it take a long while just to download the list of files. You might want to use "git sparse checkout" instead.');
-		files = await getDirectoryContentViaContentsApi(repoListingConfig);
-	}
-
-	return [files, reference];
+	updateStatus('Warning: It’s a large repo and this it take a long while just to download the list of files. You might want to use "git sparse checkout" instead.');
+	return getDirectoryContentViaContentsApi(repoListingConfig);
 }
 
 function updateStatus(status?: string, ...extra: unknown[]) {
@@ -141,16 +117,8 @@ async function getZip() {
 
 const googleDoesntLikeThis = /malware|virus|trojan/i;
 
-// eslint-disable-next-line complexity
 async function init() {
 	const zipPromise = getZip();
-	let user: string | undefined;
-	let repository: string | undefined;
-	let reference: string | undefined;
-	let directory: string | string[];
-	let type: string | undefined;
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	let filename: string | null;
 
 	const input = document.querySelector('input#token')!;
 	const token = localStorage.getItem('token');
@@ -164,65 +132,51 @@ async function init() {
 		}
 	});
 
-	try {
-		const query = new URLSearchParams(location.search);
-		const url = query.get('url');
-		if (!url) {
-			updateStatus();
-			return;
-		}
-
-		filename = query.get('filename');
-		const parsedUrl = new URL(url);
-		[, user, repository, type, reference, ...directory] = parsedUrl.pathname
-			.replace(/[/]$/, '') // https://github.com/download-directory/download-directory.github.io/issues/98
-			.split('/');
-		directory = directory.join('/');
-
-		if (!user || !repository) {
-			updateStatus();
-			return;
-		}
-
-		if (googleDoesntLikeThis.test(url)) {
-			updateStatus();
-			updateStatus('Virus, malware, trojans are not allowed');
-			return;
-		}
-
-		if (type && type !== 'tree') {
-			updateStatus(`⚠ ${parsedUrl.pathname} is not a directory.`);
-			return;
-		}
-
-		updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`);
-		console.log('Source:', {
-			user,
-			repository,
-			reference,
-			directory,
-		});
-
-		if (!reference) {
-			updateStatus('Downloading the entire repository directly from GitHub');
-			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball`;
-			return;
-		}
-
-		if (!directory) {
-			updateStatus('Downloading the entire repository directly from GitHub');
-			window.location.href = `https://api.github.com/repos/${user}/${repository}/zipball/${reference}`;
-			return;
-		}
-	} catch (error) {
-		console.error(error);
+	const query = new URLSearchParams(location.search);
+	const url = query.get('url');
+	if (!url) {
 		updateStatus();
+		return;
+	}
+
+	if (googleDoesntLikeThis.test(url)) {
+		updateStatus();
+		updateStatus('Virus, malware, trojans are not allowed');
 		return;
 	}
 
 	if (!navigator.onLine) {
 		updateStatus('⚠ You are offline.');
 		throw new Error('You are offline');
+	}
+
+	const parsedPath = await parseUrl(url);
+
+	if ('error' in parsedPath) {
+		if (parsedPath.error === 'NOT_A_REPOSITORY') {
+			updateStatus('⚠ Not a repository');
+		} else if (parsedPath.error === 'NOT_A_DIRECTORY') {
+			updateStatus('⚠ Not a directory');
+		} else {
+			updateStatus('⚠ Unknown error');
+		}
+
+		return;
+	}
+
+	const {user, repository, gitReference, directory} = parsedPath;
+	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`);
+	console.log('Source:', {
+		user,
+		repository,
+		gitReference,
+		directory,
+	});
+
+	if ('downloadUrl' in parsedPath) {
+		updateStatus('Downloading the entire repository directly from GitHub');
+		window.location.href = parsedPath.downloadUrl;
+		return;
 	}
 
 	updateStatus('Retrieving directory info');
@@ -232,17 +186,13 @@ async function init() {
 	const repoListingConfig = {
 		user,
 		repository,
-		ref: reference,
-		directory: decodeURIComponent(directory),
+		ref: gitReference,
+		directory,
 		token: localStorage.getItem('token') ?? undefined,
 		getFullData: true,
 	} as const satisfies ApiOptions;
-	let files: TreeResult<GitObject>;
-	[files, reference] = await repoListingSlashblanchSupport(
-		reference,
-		directory,
-		repoListingConfig,
-	);
+
+	const files = await repoListingSlashblanchSupport(repoListingConfig);
 
 	if (files.length === 0) {
 		updateStatus('No files to download');
@@ -270,7 +220,7 @@ async function init() {
 			const blob = downloadFile({
 				user,
 				repository,
-				reference,
+				reference: gitReference!,
 				file,
 				repoIsPrivate,
 				signal,
@@ -307,11 +257,12 @@ async function init() {
 		type: 'blob',
 	});
 
+	const filename = query.get('filename');
 	const zipFilename = filename
 		? (filename.toLowerCase().endsWith('.zip')
 			? filename
 			: filename + '.zip')
-		: `${user} ${repository} ${reference} ${directory}.zip`.replace(/\//, '-');
+		: `${user} ${repository} ${gitReference} ${directory}.zip`.replace(/\//, '-');
 	await saveFile(zipBlob, zipFilename);
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
