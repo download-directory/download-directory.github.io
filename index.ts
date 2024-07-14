@@ -94,6 +94,7 @@ async function getZip() {
 const googleDoesntLikeThis = /malware|virus|trojan/i;
 
 async function init() {
+	updateStatus();
 	const zipPromise = getZip();
 
 	const input = document.querySelector('input#token')!;
@@ -109,12 +110,10 @@ async function init() {
 	const query = new URLSearchParams(location.search);
 	const url = query.get('url');
 	if (!url) {
-		updateStatus();
 		return;
 	}
 
 	if (googleDoesntLikeThis.test(url)) {
-		updateStatus();
 		updateStatus('Virus, malware, trojans are not allowed');
 		return;
 	}
