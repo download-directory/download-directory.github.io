@@ -17,6 +17,11 @@ test('getRepositoryInfo', async () => {
 		  "error": "BRANCH_NOT_FOUND",
 		}
 	`);
+	await expect(getRepositoryInfo('https://github.com/refined-github/private/tree/durian/folder')).resolves.toMatchInlineSnapshot(`
+		{
+		  "error": "REPOSITORY_NOT_FOUND",
+		}
+	`);
 	// Simple branches are not verified at this point. Should they be?
 	await expect(getRepositoryInfo('https://github.com/refined-github/sandbox/tree/durian')).resolves.toMatchInlineSnapshot(`
 		{
