@@ -243,7 +243,6 @@ void init().catch(error => {
 				updateStatus('⚠ The token provided is invalid or has been revoked.', {
 					token: localStorage.getItem('token'),
 				});
-				void waitForToken();
 				break;
 			}
 
@@ -252,7 +251,6 @@ void init().catch(error => {
 					'⚠ Your token rate limit has been exceeded. Please wait or add a token',
 					{token: localStorage.getItem('token')},
 				);
-				void waitForToken();
 				break;
 			}
 
