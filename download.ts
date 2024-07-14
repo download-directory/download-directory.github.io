@@ -1,4 +1,4 @@
-import {type GitObject} from 'list-github-dir-content';
+import {type ContentsReponseObject, type TreeResponseObject} from 'list-github-dir-content';
 import pRetry, {type FailedAttemptError} from 'p-retry';
 
 function escapeFilepath(path: string) {
@@ -32,7 +32,7 @@ type FileRequest = {
 	user: string;
 	repository: string;
 	reference: string;
-	file: GitObject;
+	file: TreeResponseObject | ContentsReponseObject;
 	signal: AbortSignal;
 };
 
@@ -99,7 +99,7 @@ export async function downloadFile({
 	repository: string;
 	reference: string;
 	repoIsPrivate: boolean;
-	file: GitObject;
+	file: TreeResponseObject | ContentsReponseObject;
 	signal: AbortSignal;
 }) {
 	const fileRequest = {
@@ -111,7 +111,7 @@ export async function downloadFile({
 			: fetchPublicFile(fileRequest);
 	const onFailedAttempt = (error: FailedAttemptError) => {
 		console.error(
-			`Error downloading ${file.url}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`,
+			`Error downloading ${file.path}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`,
 		);
 	};
 
