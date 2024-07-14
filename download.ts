@@ -77,13 +77,13 @@ export async function downloadFile({
 	repository,
 	reference,
 	file,
-	repoIsPrivate,
+	isPrivate,
 	signal,
 }: {
 	user: string;
 	repository: string;
 	reference: string;
-	repoIsPrivate: boolean;
+	isPrivate: boolean;
 	file: TreeResponseObject | ContentsReponseObject;
 	signal: AbortSignal;
 }) {
@@ -91,7 +91,7 @@ export async function downloadFile({
 		user, repository, reference, file, signal,
 	};
 	const localDownload = async () =>
-		repoIsPrivate
+		isPrivate
 			? fetchPrivateFile(fileRequest)
 			: fetchPublicFile(fileRequest);
 	const onFailedAttempt = (error: FailedAttemptError) => {

@@ -10,8 +10,7 @@ import {
 } from 'list-github-dir-content';
 import pMap from 'p-map';
 import {downloadFile} from './download.js';
-import parseUrl from './parse-url.js';
-import authenticatedFetch from './authenticated-fetch.js';
+import getRepositoryInfo from './repository-info.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -45,45 +44,6 @@ function updateStatus(status?: string, ...extra: unknown[]) {
 	console.log(status, ...extra);
 }
 
-async function waitForToken() {
-	const input = document.querySelector('input#token')!;
-
-	const token = localStorage.getItem('token');
-	if (token) {
-		input.value = token!;
-	} else {
-		const toggle = document.querySelector('input#token-toggle')!;
-		toggle.checked = true;
-		updateStatus('Waiting for token…');
-		await new Promise<void>(resolve => {
-			input.addEventListener('input', function handler() {
-				if (input.checkValidity()) {
-					toggle.checked = false;
-					resolve();
-					input.removeEventListener('input', handler);
-				}
-			}, {passive: true});
-		});
-	}
-}
-
-async function fetchRepoInfo(repo: string): Promise<{private: boolean}> {
-	const response = await authenticatedFetch(
-		`https://api.github.com/repos/${repo}`,
-	);
-	if (response.status === 404) {
-		updateStatus('⚠ Repository was not found. If it’s private, you should enter a token that can access it.', {repo});
-		throw new Error('Repository not found');
-	}
-
-	if (!response.ok) {
-		updateStatus('⚠ Could not obtain repository data from the GitHub API.', {repo, response});
-		throw new Error('Fetch error');
-	}
-
-	return response.json() as Promise<{private: boolean}>;
-}
-
 async function getZip() {
 	// @ts-expect-error idk idc
 	// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/consistent-type-imports
@@ -109,6 +69,7 @@ async function init() {
 
 	const query = new URLSearchParams(location.search);
 	const url = query.get('url');
+	document.querySelector('input#url')!.value = url ?? '';
 	if (!url) {
 		return;
 	}
@@ -123,13 +84,16 @@ async function init() {
 		throw new Error('You are offline');
 	}
 
-	const parsedPath = await parseUrl(url);
+	const parsedPath = await getRepositoryInfo(url);
 
 	if ('error' in parsedPath) {
+		// eslint-disable-next-line unicorn/prefer-switch -- I hate how it looks
 		if (parsedPath.error === 'NOT_A_REPOSITORY') {
 			updateStatus('⚠ Not a repository');
 		} else if (parsedPath.error === 'NOT_A_DIRECTORY') {
 			updateStatus('⚠ Not a directory');
+		} else if (parsedPath.error === 'REPOSITORY_NOT_FOUND') {
+			updateStatus('⚠ Repository not found. If it’s private, you should enter a token that can access it.');
 		} else {
 			updateStatus('⚠ Unknown error');
 		}
@@ -137,13 +101,14 @@ async function init() {
 		return;
 	}
 
-	const {user, repository, gitReference, directory} = parsedPath;
+	const {user, repository, gitReference, directory, isPrivate} = parsedPath;
 	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`, {
 		source: {
 			user,
 			repository,
 			gitReference,
 			directory,
+			isPrivate,
 		},
 	});
 
@@ -154,8 +119,6 @@ async function init() {
 	}
 
 	updateStatus('Retrieving directory info');
-
-	const {private: repoIsPrivate} = await fetchRepoInfo(`${user}/${repository}`);
 
 	const files = await listFiles({
 		user,
@@ -190,7 +153,7 @@ async function init() {
 				repository,
 				reference: gitReference!,
 				file,
-				repoIsPrivate,
+				isPrivate,
 				signal,
 			});
 
