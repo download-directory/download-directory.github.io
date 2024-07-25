@@ -196,12 +196,11 @@ async function init() {
 		type: 'blob',
 	});
 
-	const filename = query.get('filename');
-	const zipFilename = filename
-		? (filename.toLowerCase().endsWith('.zip')
-			? filename
-			: filename + '.zip')
-		: `${user} ${repository} ${gitReference} ${directory}.zip`.replace(/\//, '-');
+	const filename
+		= query.get('filename')
+		?? `${user} ${repository} ${gitReference} ${directory}`.replace(/\//, '-');
+
+	const zipFilename = filename.endsWith('.zip') ? filename : `${filename}.zip`;
 	saveFile(zipBlob, zipFilename);
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
