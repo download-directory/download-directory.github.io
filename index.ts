@@ -189,7 +189,7 @@ async function init() {
 		throw error;
 	}
 
-	updateStatus(`Zipping ${downloaded} files`);
+	updateStatus(`Zipping ${downloaded} files...`);
 
 	const zip = await zipPromise;
 	const zipBlob = await zip.generateAsync({
@@ -202,7 +202,7 @@ async function init() {
 			? filename
 			: filename + '.zip')
 		: `${user} ${repository} ${gitReference} ${directory}.zip`.replace(/\//, '-');
-	await saveFile(zipBlob, zipFilename);
+	saveFile(zipBlob, zipFilename);
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
