@@ -1,6 +1,5 @@
 // eslint-disable-next-line import/no-unassigned-import
 import 'typed-query-selector';
-import saveFile from 'save-file';
 import {
 	getDirectoryContentViaContentsApi,
 	getDirectoryContentViaTreesApi,
@@ -16,6 +15,15 @@ type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
 function isError(error: unknown): error is Error {
 	return error instanceof Error;
+}
+
+function saveFile(blob: Blob, filename: string) {
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	a.click();
+	URL.revokeObjectURL(url);
 }
 
 async function listFiles(
