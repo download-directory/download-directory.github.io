@@ -1,6 +1,6 @@
 export default async function authenticatedFetch(
 	url: string,
-	{signal, method}: {signal?: AbortSignal, method?: 'HEAD'} = {},
+	{signal, method}: {signal?: AbortSignal; method?: 'HEAD'} = {},
 ): Promise<Response> {
 	const token = globalThis.localStorage?.getItem('token');
 
