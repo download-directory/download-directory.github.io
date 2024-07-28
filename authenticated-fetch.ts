@@ -1,10 +1,12 @@
 export default async function authenticatedFetch(
 	url: string,
-	{signal}: {signal?: AbortSignal} = {},
+	{signal, method}: {signal?: AbortSignal, method?: 'HEAD'} = {},
 ): Promise<Response> {
 	const token = globalThis.localStorage?.getItem('token');
 
 	const response = await fetch(url, {
+		method,
+		signal,
 		...(token
 			? {
 				headers: {
@@ -13,7 +15,6 @@ export default async function authenticatedFetch(
 				},
 			}
 			: {}),
-		signal,
 	});
 
 	switch (response.status) {
