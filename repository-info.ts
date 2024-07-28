@@ -100,7 +100,7 @@ export default async function getRepositoryInfo(
 }
 
 async function checkBranchExists(user: string, repo: string, gitReference: string): Promise<boolean> {
-	const apiUrl = `https://api.github.com/repos/${user}/${repo}/branches/${gitReference}`;
+	const apiUrl = `https://api.github.com/repos/${user}/${repo}/git/ref/${gitReference}`;
 	const response = await authenticatedFetch(apiUrl);
 	return response.ok;
 }
