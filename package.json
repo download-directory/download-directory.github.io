@@ -12,7 +12,8 @@
 		"test": "run-p lint build test:*",
 		"test:vitest": "vitest run",
 		"lint": "xo",
-		"watch": "run-p watch:*",
+		"start": "run-p watch:*",
+		"watch": "npm start",
 		"watch:build": "parcel serve --dist-dir public",
 		"watch:typescript": "tsc --watch --noEmit",
 		"watch:vitest": "vitest watch"
@@ -36,6 +37,7 @@
 		"buffer": "^6.0.3",
 		"npm-run-all": "^4.1.5",
 		"parcel": "^2.12.0",
+		"parcel-reporter-static-files-copy": "^1.5.3",
 		"parcel-resolver-ignore": "^2.2.0",
 		"process": "^0.11.10",
 		"typed-query-selector": "^2.11.2",
