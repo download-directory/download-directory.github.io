@@ -13,7 +13,7 @@
 html {
 	overflow-y: auto;
 	min-width: 320px;
-	font: var(--font-size) / var(--line-height) Roboto, sans-serif;
+	font: var(--font-size) / var(--line-height) Poppins, sans-serif;
 	background: linear-gradient(to bottom, var(--light-green), var(--dark-green))
 		var(--light-green);
 	color: #fff;
