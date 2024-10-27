@@ -1,6 +1,5 @@
 // eslint-disable-next-line import/no-unassigned-import
 import 'typed-query-selector';
-import saveFile from 'save-file';
 import {
 	getDirectoryContentViaContentsApi,
 	getDirectoryContentViaTreesApi,
@@ -16,6 +15,15 @@ type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
 function isError(error: unknown): error is Error {
 	return error instanceof Error;
+}
+
+function saveFile(blob: Blob, filename: string) {
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	a.click();
+	URL.revokeObjectURL(url);
 }
 
 async function listFiles(
@@ -181,20 +189,19 @@ async function init() {
 		throw error;
 	}
 
-	updateStatus(`Zipping ${downloaded} files`);
+	updateStatus(`Zipping ${downloaded} files...`);
 
 	const zip = await zipPromise;
 	const zipBlob = await zip.generateAsync({
 		type: 'blob',
 	});
 
-	const filename = query.get('filename');
-	const zipFilename = filename
-		? (filename.toLowerCase().endsWith('.zip')
-			? filename
-			: filename + '.zip')
-		: `${user} ${repository} ${gitReference} ${directory}.zip`.replace(/\//, '-');
-	await saveFile(zipBlob, zipFilename);
+	const filename
+		= query.get('filename')
+		?? `${user} ${repository} ${gitReference} ${directory}`.replace(/\//, '-');
+
+	const zipFilename = filename.endsWith('.zip') ? filename : `${filename}.zip`;
+	saveFile(zipBlob, zipFilename);
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
