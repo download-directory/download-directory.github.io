@@ -28,7 +28,7 @@
 	},
 	"dependencies": {
 		"jszip": "^3.10.1",
-		"list-github-dir-content": "^4.0.2",
+		"list-github-dir-content": "^4.0.3",
 		"p-map": "^7.0.2",
 		"p-retry": "^6.2.0"
 	},
