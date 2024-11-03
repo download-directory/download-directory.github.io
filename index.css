@@ -10,6 +10,10 @@
 	box-sizing: border-box;
 }
 
+::selection {
+	background: #fff3;
+}
+
 html {
 	overflow-y: auto;
 	min-width: 320px;
