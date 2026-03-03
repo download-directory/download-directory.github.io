@@ -3,7 +3,7 @@ import pRetry, {type FailedAttemptError} from 'p-retry';
 import authenticatedFetch from './authenticated-fetch.js';
 
 function escapeFilepath(path: string) {
-	return path.replaceAll('#', '%23');
+	return path.replaceAll('%', '%25').replaceAll('#', '%23');
 }
 
 async function maybeResponseLfs(response: Response): Promise<boolean> {
