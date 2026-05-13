@@ -161,7 +161,7 @@ async function init() {
 
 	try {
 		await pMap(files, async file => {
-			const blob = downloadFile({
+			const blob = await downloadFile({
 				user,
 				repository,
 				reference: gitReference!,
