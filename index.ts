@@ -9,7 +9,7 @@ import {
 } from 'list-github-dir-content';
 import pMap from 'p-map';
 import {downloadFile} from './download.js';
-import getRepositoryInfo from './repository-info.js';
+import {getRepositoryInfo, getRepositoryPreview} from './repository-info.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -87,15 +87,25 @@ async function init() {
 		throw new Error('You are offline');
 	}
 
-	const parsedPath = await getRepositoryInfo(url);
+	const repositoryPreview = getRepositoryPreview(url);
+	if ('error' in repositoryPreview) {
+		if (repositoryPreview.error === 'NOT_A_REPOSITORY') {
+			updateStatus('⚠ Not a repository');
+		} else if (repositoryPreview.error === 'NOT_A_DIRECTORY') {
+			updateStatus('⚠ Not a directory');
+		} else {
+			updateStatus('⚠ Unknown error');
+		}
+
+		return;
+	}
+
+	updateStatus(`Repo: ${repositoryPreview.user}/${repositoryPreview.repository}`);
+
+	const parsedPath = await getRepositoryInfo(repositoryPreview);
 
 	if ('error' in parsedPath) {
-		// eslint-disable-next-line unicorn/prefer-switch -- I hate how it looks
-		if (parsedPath.error === 'NOT_A_REPOSITORY') {
-			updateStatus('⚠ Not a repository');
-		} else if (parsedPath.error === 'NOT_A_DIRECTORY') {
-			updateStatus('⚠ Not a directory');
-		} else if (parsedPath.error === 'REPOSITORY_NOT_FOUND') {
+		if (parsedPath.error === 'REPOSITORY_NOT_FOUND') {
 			updateStatus('⚠ Repository not found. If it’s private, you should enter a token that can access it.');
 		} else {
 			updateStatus('⚠ Unknown error');
@@ -105,7 +115,7 @@ async function init() {
 	}
 
 	const {user, repository, gitReference, directory, isPrivate} = parsedPath;
-	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`, {
+	updateStatus(`Directory: /${directory}`, {
 		source: {
 			user,
 			repository,
