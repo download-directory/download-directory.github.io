@@ -37,7 +37,7 @@ async function listFiles(
 		return files;
 	}
 
-	onWarning('It’s a large repo and this it take a long while just to download the list of files. You might want to use "git sparse checkout" instead.');
+	onWarning('It’s a large repo and this will take a long while just to download the list of files. You might want to use "git sparse checkout" instead.');
 	return getDirectoryContentViaContentsApi(repoListingConfig);
 }
 
