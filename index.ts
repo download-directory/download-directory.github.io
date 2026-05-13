@@ -69,15 +69,16 @@ async function init() {
 	}
 
 	const download = downloadDirectory(url);
-	download.addEventListener('info', event => {
-		updateStatus((event as StatusEvent).detail.message, (event as StatusEvent).detail);
-	});
-	download.addEventListener('warning', event => {
-		updateStatus(`Warning: ${(event as StatusEvent).detail.message}`, (event as StatusEvent).detail);
-	});
-	download.addEventListener('download', event => {
-		updateStatus((event as StatusEvent).detail.message, (event as StatusEvent).detail);
-	});
+	const addStatusListener = (type: 'info' | 'warning' | 'download', prefix = '') => {
+		download.addEventListener(type, event => {
+			const statusEvent = event as StatusEvent;
+			updateStatus(`${prefix}${statusEvent.detail.message}`, statusEvent.detail);
+		});
+	};
+
+	addStatusListener('info');
+	addStatusListener('warning', 'Warning: ');
+	addStatusListener('download');
 
 	const source = await download.source;
 	const {user, repository, directory} = source;

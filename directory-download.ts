@@ -50,6 +50,14 @@ function createStatusEvent(type: string, message: string, detail: Record<string,
 	});
 }
 
+function getToken() {
+	try {
+		return localStorage.getItem('token') ?? undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 class DownloadDirectoryTask extends EventTarget {
 	readonly #controller = new AbortController();
 	readonly #sourcePromise: Promise<DownloadDirectorySource>;
@@ -118,7 +126,7 @@ class DownloadDirectoryTask extends EventTarget {
 			repository,
 			ref: gitReference,
 			directory,
-			token: globalThis.localStorage?.getItem('token') ?? undefined,
+			token: getToken(),
 			getFullData: true,
 		}, message => {
 			this.#emitWarning(message);
