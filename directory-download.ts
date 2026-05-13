@@ -21,12 +21,6 @@ type DownloadStatusEvent = CustomEvent<{message: string} & Record<string, unknow
 
 type DownloadDirectorySource = Exclude<Awaited<ReturnType<typeof getRepositoryInfo>>, {error: string}>;
 
-export type DirectoryDownload = EventTarget & {
-	source: Promise<DownloadDirectorySource>;
-	files: Promise<DownloadedFile[]>;
-	abort: () => void;
-};
-
 async function listFiles(
 	repoListingConfig: ApiOptions,
 	onWarning: (message: string) => void,
@@ -58,7 +52,7 @@ function getToken() {
 	}
 }
 
-class DownloadDirectoryTask extends EventTarget {
+export class DownloadDirectoryTask extends EventTarget {
 	readonly #controller = new AbortController();
 	readonly #sourcePromise: Promise<DownloadDirectorySource>;
 	readonly #filesPromise: Promise<DownloadedFile[]>;
@@ -161,17 +155,10 @@ class DownloadDirectoryTask extends EventTarget {
 	}
 }
 
+export type DirectoryDownload = DownloadDirectoryTask;
+
 export default function downloadDirectory(url: string): DirectoryDownload {
-	const task = new DownloadDirectoryTask(url);
-	const proxy: DirectoryDownload = {
-		addEventListener: task.addEventListener.bind(task),
-		removeEventListener: task.removeEventListener.bind(task),
-		dispatchEvent: task.dispatchEvent.bind(task),
-		files: task.files,
-		source: task.source,
-		abort: task.abort.bind(task),
-	};
-	return proxy;
+	return new DownloadDirectoryTask(url);
 }
 
 export type StatusEvent = DownloadStatusEvent;
