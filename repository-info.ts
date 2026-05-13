@@ -9,9 +9,10 @@ function cleanUrl(url: string) {
 export function getRepositoryPreview(url: string):
 | {error: 'NOT_A_REPOSITORY' | 'NOT_A_DIRECTORY'}
 | {user: string; repository: string; directory: string} {
-	const [, user, repository, type, , ...directoryParts] = cleanUrl(
+	const [, user, repository, ...restPathParts] = cleanUrl(
 		decodeURIComponent(new URL(url).pathname),
 	).split('/');
+	const type = restPathParts[0];
 
 	if (!user || !repository) {
 		return {error: 'NOT_A_REPOSITORY'};
@@ -20,6 +21,8 @@ export function getRepositoryPreview(url: string):
 	if (type && type !== 'tree') {
 		return {error: 'NOT_A_DIRECTORY'};
 	}
+
+	const directoryParts = type === 'tree' ? restPathParts.slice(2) : [];
 
 	return {
 		user,
