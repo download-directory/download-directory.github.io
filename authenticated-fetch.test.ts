@@ -54,3 +54,20 @@ test('does not send token to raw.githubusercontent.com', async () => {
 		signal: undefined,
 	});
 });
+
+test('sends token to GitHub Enterprise API-style URLs', async () => {
+	const fetchMock = vi.fn().mockResolvedValue(new Response());
+	globalThis.fetch = fetchMock;
+	globalThis.localStorage = createLocalStorageWithToken();
+
+	await authenticatedFetch('https://ghes.example.com/api/v3/repos/user/repo');
+
+	const authorizationHeader = 'Authorization';
+	expect(fetchMock).toHaveBeenCalledWith('https://ghes.example.com/api/v3/repos/user/repo', {
+		headers: {
+			[authorizationHeader]: 'Bearer token',
+		},
+		method: undefined,
+		signal: undefined,
+	});
+});

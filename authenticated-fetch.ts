@@ -1,9 +1,14 @@
+function isGitHubApiUrl(url: string): boolean {
+	const {hostname, pathname} = new URL(url);
+	return hostname === 'api.github.com' || pathname.startsWith('/api/v3/');
+}
+
 export default async function authenticatedFetch(
 	url: string,
 	{signal, method}: {signal?: AbortSignal; method?: 'HEAD'} = {},
 ): Promise<Response> {
 	const token = globalThis.localStorage?.getItem('token');
-	const isGitHubApiRequest = url.startsWith('https://api.github.com/');
+	const isGitHubApiRequest = isGitHubApiUrl(url);
 
 	const response = await fetch(url, {
 		method,
