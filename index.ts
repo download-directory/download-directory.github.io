@@ -60,7 +60,6 @@ async function getZip() {
 }
 
 const googleDoesntLikeThis = /malware|virus|trojan/i;
-let hasShownGoogleSafeBrowsingStatus = false;
 
 async function init() {
 	updateStatus();
@@ -132,14 +131,11 @@ async function init() {
 		token: localStorage.getItem('token') ?? undefined,
 		getFullData: true,
 	});
+	let foundBlockedFiles = false;
 
 	files = files.filter(file => {
 		if (googleDoesntLikeThis.test(file.path)) {
-			if (!hasShownGoogleSafeBrowsingStatus) {
-				hasShownGoogleSafeBrowsingStatus = true;
-				updateStatus('⚠ Some files were blocked due to Google Safe Browsing.');
-			}
-
+			foundBlockedFiles = true;
 			updateStatus(`File blocked: ${file.path}`);
 			return false;
 		}
@@ -148,6 +144,10 @@ async function init() {
 	});
 
 	if (files.length === 0) {
+		if (foundBlockedFiles) {
+			updateStatus('⚠ Some files were blocked due to Google Safe Browsing.');
+		}
+
 		updateStatus('No files to download');
 		return;
 	}
@@ -207,6 +207,10 @@ async function init() {
 
 	const zipFilename = filename.endsWith('.zip') ? filename : `${filename}.zip`;
 	saveFile(zipBlob, zipFilename);
+	if (foundBlockedFiles) {
+		updateStatus('⚠ Some files were blocked due to Google Safe Browsing.');
+	}
+
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
