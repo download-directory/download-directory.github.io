@@ -10,6 +10,7 @@ import {
 import pMap from 'p-map';
 import {downloadFile} from './download.js';
 import getRepositoryInfo from './repository-info.js';
+import {filterBlockedFiles} from './blocked-files.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -59,8 +60,6 @@ async function getZip() {
 	return new JSZip();
 }
 
-const googleDoesntLikeThis = /malware|virus|trojan/i;
-
 async function init() {
 	updateStatus();
 	const zipPromise = getZip();
@@ -79,11 +78,6 @@ async function init() {
 	const url = query.get('url');
 	document.querySelector('input#url')!.value = url ?? '';
 	if (!url) {
-		return;
-	}
-
-	if (googleDoesntLikeThis.test(url)) {
-		updateStatus('Virus, malware, trojans are not allowed');
 		return;
 	}
 
@@ -142,12 +136,17 @@ async function init() {
 		return;
 	}
 
-	if (files.some(file => googleDoesntLikeThis.test(file.path))) {
-		updateStatus('Virus, malware, trojans are not allowed');
+	const {allowedFiles, blockedFiles} = filterBlockedFiles(files);
+	for (const blockedFile of blockedFiles) {
+		updateStatus(`File blocked: ${blockedFile.path}`);
+	}
+
+	if (allowedFiles.length === 0) {
+		updateStatus('No files to download');
 		return;
 	}
 
-	updateStatus(`Will download ${files.length} files`);
+	updateStatus(`Will download ${allowedFiles.length} files`);
 
 	const controller = new AbortController();
 	const signal = controller.signal;
@@ -155,7 +154,7 @@ async function init() {
 	let downloaded = 0;
 
 	try {
-		await pMap(files, async file => {
+		await pMap(allowedFiles, async file => {
 			const blob = downloadFile({
 				user,
 				repository,
