@@ -1,6 +1,10 @@
 function isGitHubApiUrl(url: string): boolean {
-	const {hostname, pathname} = new URL(url);
-	return hostname === 'api.github.com' || pathname.startsWith('/api/v3/');
+	try {
+		const {hostname, pathname} = new URL(url);
+		return hostname === 'api.github.com' || pathname.startsWith('/api/v3/');
+	} catch {
+		return false;
+	}
 }
 
 export default async function authenticatedFetch(

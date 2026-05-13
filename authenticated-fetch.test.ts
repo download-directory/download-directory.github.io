@@ -13,7 +13,7 @@ function createLocalStorageWithToken(): Storage {
 	return {
 		length: 1,
 		clear: () => undefined,
-		getItem: () => 'token',
+		getItem: (key: string) => key === 'token' ? 'token' : null,
 		key: () => null,
 		removeItem: () => undefined,
 		setItem: () => undefined,
