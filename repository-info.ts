@@ -8,7 +8,7 @@ function cleanUrl(url: string) {
 
 export function getRepositoryPreview(url: string):
 | {error: 'NOT_A_REPOSITORY' | 'NOT_A_DIRECTORY'}
-| {user: string; repository: string; directory: string} {
+| {user: string; repository: string; parts: string[]; directory: string} {
 	const [, user, repository, ...restPathParts] = cleanUrl(
 		decodeURIComponent(new URL(url).pathname),
 	).split('/');
@@ -23,10 +23,12 @@ export function getRepositoryPreview(url: string):
 	}
 
 	const directoryParts = type === 'tree' ? restPathParts.slice(2) : [];
+	const parts = type === 'tree' ? restPathParts.slice(1) : [];
 
 	return {
 		user,
 		repository,
+		parts,
 		directory: directoryParts.join('/'),
 	};
 }
@@ -48,8 +50,8 @@ async function parsePath(
 	}
 }
 
-export default async function getRepositoryInfo(
-	url: string,
+export async function getRepositoryInfo(
+	repositoryInfo: {user: string; repository: string; parts: string[]},
 ): Promise<
 	| {error: string}
 	| {
@@ -68,16 +70,7 @@ export default async function getRepositoryInfo(
 		isPrivate: boolean;
 	}
 	> {
-	const preview = getRepositoryPreview(url);
-	if ('error' in preview) {
-		return preview;
-	}
-
-	const {user, repository} = preview;
-	const pathParts = cleanUrl(
-		decodeURIComponent(new URL(url).pathname),
-	).split('/');
-	const parts = pathParts[3] === 'tree' ? pathParts.slice(4) : [];
+	const {user, repository, parts} = repositoryInfo;
 
 	const repoInfoResponse = await authenticatedFetch(
 		`https://api.github.com/repos/${user}/${repository}`,
