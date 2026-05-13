@@ -9,7 +9,7 @@ import {
 } from 'list-github-dir-content';
 import pMap from 'p-map';
 import {downloadFile} from './download.js';
-import getRepositoryInfo from './repository-info.js';
+import getRepositoryInfo, {getRepositoryPreview} from './repository-info.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -92,6 +92,11 @@ async function init() {
 		throw new Error('You are offline');
 	}
 
+	const repositoryPreview = getRepositoryPreview(url);
+	if (!('error' in repositoryPreview)) {
+		updateStatus(`Repo: ${repositoryPreview.user}/${repositoryPreview.repository}\nDirectory: /${repositoryPreview.directory}`);
+	}
+
 	const parsedPath = await getRepositoryInfo(url);
 
 	if ('error' in parsedPath) {
@@ -110,15 +115,6 @@ async function init() {
 	}
 
 	const {user, repository, gitReference, directory, isPrivate} = parsedPath;
-	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`, {
-		source: {
-			user,
-			repository,
-			gitReference,
-			directory,
-			isPrivate,
-		},
-	});
 
 	if ('downloadUrl' in parsedPath) {
 		updateStatus('Downloading the entire repository directly from GitHub');

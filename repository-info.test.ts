@@ -1,5 +1,19 @@
 import {test, expect} from 'vitest';
-import getRepositoryInfo from './repository-info.js';
+import getRepositoryInfo, {getRepositoryPreview} from './repository-info.js';
+
+test('getRepositoryPreview', () => {
+	expect(getRepositoryPreview('https://github.com/user')).toEqual({
+		error: 'NOT_A_REPOSITORY',
+	});
+	expect(getRepositoryPreview('https://github.com/fregante/doma/blob/develop/readme.md')).toEqual({
+		error: 'NOT_A_DIRECTORY',
+	});
+	expect(getRepositoryPreview('https://github.com/wesbos/JavaScript30/tree/master/01%20-%20JavaScript%20Drum%20Kit/sounds')).toEqual({
+		user: 'wesbos',
+		repository: 'JavaScript30',
+		directory: '01 - JavaScript Drum Kit/sounds',
+	});
+});
 
 test('getRepositoryInfo', async () => {
 	await expect(getRepositoryInfo('https://github.com/user')).resolves.toMatchInlineSnapshot(`
