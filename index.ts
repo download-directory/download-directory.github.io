@@ -105,7 +105,7 @@ async function init() {
 		return;
 	}
 
-	updateStatus(`Parsed URL — Repo: ${repositoryPreview.user}/${repositoryPreview.repository}\nDirectory: /${repositoryPreview.directory}`);
+	updateStatus(`Repo: ${repositoryPreview.user}/${repositoryPreview.repository}`);
 
 	const parsedPath = await getRepositoryInfo(repositoryPreview);
 
@@ -120,7 +120,7 @@ async function init() {
 	}
 
 	const {user, repository, gitReference, directory, isPrivate} = parsedPath;
-	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`, {
+	updateStatus(`Directory: /${directory}`, {
 		source: {
 			user,
 			repository,
