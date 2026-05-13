@@ -82,11 +82,6 @@ async function init() {
 		return;
 	}
 
-	if (googleDoesntLikeThis.test(url)) {
-		updateStatus('Virus, malware, trojans are not allowed');
-		return;
-	}
-
 	if (!navigator.onLine) {
 		updateStatus('⚠ You are offline.');
 		throw new Error('You are offline');
@@ -138,7 +133,7 @@ async function init() {
 
 	updateStatus('Retrieving directory info');
 
-	const files = await listFiles({
+	let files = await listFiles({
 		user,
 		repository,
 		ref: gitReference,
@@ -146,14 +141,24 @@ async function init() {
 		token: localStorage.getItem('token') ?? undefined,
 		getFullData: true,
 	});
+	let foundBlockedFiles = false;
+
+	files = files.filter(file => {
+		if (googleDoesntLikeThis.test(file.path)) {
+			foundBlockedFiles = true;
+			updateStatus(`File blocked: ${file.path}`);
+			return false;
+		}
+
+		return true;
+	});
 
 	if (files.length === 0) {
-		updateStatus('No files to download');
-		return;
-	}
+		if (foundBlockedFiles) {
+			updateStatus('⚠ Some files were blocked due to Google Safe Browsing.');
+		}
 
-	if (files.some(file => googleDoesntLikeThis.test(file.path))) {
-		updateStatus('Virus, malware, trojans are not allowed');
+		updateStatus('No files to download');
 		return;
 	}
 
@@ -166,7 +171,7 @@ async function init() {
 
 	try {
 		await pMap(files, async file => {
-			const blob = downloadFile({
+			const blob = await downloadFile({
 				user,
 				repository,
 				reference: gitReference!,
@@ -212,6 +217,10 @@ async function init() {
 
 	const zipFilename = filename.endsWith('.zip') ? filename : `${filename}.zip`;
 	saveFile(zipBlob, zipFilename);
+	if (foundBlockedFiles) {
+		updateStatus('⚠ Some files were blocked due to Google Safe Browsing.');
+	}
+
 	updateStatus(`Downloaded ${downloaded} files! Done!`);
 }
 
