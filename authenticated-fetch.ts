@@ -1,3 +1,12 @@
+function isGitHubApiUrl(url: string): boolean {
+	try {
+		const {hostname, pathname} = new URL(url);
+		return hostname === 'api.github.com' || pathname.startsWith('/api/v3/');
+	} catch {
+		return false;
+	}
+}
+
 export default async function authenticatedFetch(
 	url: string,
 	{signal, method}: {signal?: AbortSignal; method?: 'HEAD'} = {},
@@ -7,7 +16,7 @@ export default async function authenticatedFetch(
 	const response = await fetch(url, {
 		method,
 		signal,
-		...(token
+		...(token && isGitHubApiUrl(url)
 			? {
 				headers: {
 					// eslint-disable-next-line @typescript-eslint/naming-convention
