@@ -10,6 +10,7 @@ test('hasBlockedKeyword', () => {
 test('filterBlockedFiles', () => {
 	const {allowedFiles, blockedFiles} = filterBlockedFiles([
 		{path: 'Other/icons/Malwarebytes.icns'},
+		{path: 'Other/icons/virus-alert.icns'},
 		{path: 'Other/icons/Finder.icns'},
 		{path: 'Other/icons/Trojan Horse.icns'},
 	] as unknown as TreeResponseObject[]);
@@ -19,6 +20,7 @@ test('filterBlockedFiles', () => {
 	]);
 	expect(blockedFiles.map(file => file.path)).toEqual([
 		'Other/icons/Malwarebytes.icns',
+		'Other/icons/virus-alert.icns',
 		'Other/icons/Trojan Horse.icns',
 	]);
 });

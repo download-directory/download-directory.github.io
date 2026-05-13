@@ -12,8 +12,19 @@ export function filterBlockedFiles(
 		allowedFiles: Array<TreeResponseObject | ContentsReponseObject>;
 		blockedFiles: Array<TreeResponseObject | ContentsReponseObject>;
 	} {
+	const allowedFiles: Array<TreeResponseObject | ContentsReponseObject> = [];
+	const blockedFiles: Array<TreeResponseObject | ContentsReponseObject> = [];
+
+	for (const file of files) {
+		if (hasBlockedKeyword(file.path)) {
+			blockedFiles.push(file);
+		} else {
+			allowedFiles.push(file);
+		}
+	}
+
 	return {
-		allowedFiles: files.filter(file => !hasBlockedKeyword(file.path)),
-		blockedFiles: files.filter(file => hasBlockedKeyword(file.path)),
+		allowedFiles,
+		blockedFiles,
 	};
 }
