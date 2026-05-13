@@ -22,6 +22,7 @@ type FileRequest = {
 	reference: string;
 	file: TreeResponseObject | ContentsReponseObject;
 	signal: AbortSignal;
+	onRetry?: (error: FailedAttemptError) => void;
 };
 
 async function fetchPublicFile({
@@ -79,6 +80,7 @@ export async function downloadFile({
 	file,
 	isPrivate,
 	signal,
+	onRetry,
 }: {
 	user: string;
 	repository: string;
@@ -86,9 +88,10 @@ export async function downloadFile({
 	isPrivate: boolean;
 	file: TreeResponseObject | ContentsReponseObject;
 	signal: AbortSignal;
+	onRetry?: (error: FailedAttemptError) => void;
 }) {
 	const fileRequest = {
-		user, repository, reference, file, signal,
+		user, repository, reference, file, signal, onRetry,
 	};
 	const localDownload = async () =>
 		isPrivate
@@ -98,6 +101,7 @@ export async function downloadFile({
 		console.error(
 			`Error downloading ${file.path}. Attempt ${error.attemptNumber}. ${error.retriesLeft} retries left.`,
 		);
+		onRetry?.(error);
 	};
 
 	return pRetry(localDownload, {onFailedAttempt});

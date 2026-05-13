@@ -1,17 +1,6 @@
 // eslint-disable-next-line import/no-unassigned-import
 import 'typed-query-selector';
-import {
-	getDirectoryContentViaContentsApi,
-	getDirectoryContentViaTreesApi,
-	type ListGithubDirectoryOptions,
-	type TreeResponseObject,
-	type ContentsReponseObject,
-} from 'list-github-dir-content';
-import pMap from 'p-map';
-import {downloadFile} from './download.js';
-import getRepositoryInfo from './repository-info.js';
-
-type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
+import downloadDirectory, {type StatusEvent} from './directory-download.js';
 
 function isError(error: unknown): error is Error {
 	return error instanceof Error;
@@ -24,19 +13,6 @@ function saveFile(blob: Blob, filename: string) {
 	a.download = filename;
 	a.click();
 	URL.revokeObjectURL(url);
-}
-
-async function listFiles(
-	repoListingConfig: ApiOptions,
-): Promise<Array<TreeResponseObject | ContentsReponseObject>> {
-	const files = await getDirectoryContentViaTreesApi(repoListingConfig);
-
-	if (!files.truncated) {
-		return files;
-	}
-
-	updateStatus('Warning: It’s a large repo and this it take a long while just to download the list of files. You might want to use "git sparse checkout" instead.');
-	return getDirectoryContentViaContentsApi(repoListingConfig);
 }
 
 function updateStatus(status?: string, ...extra: unknown[]) {
@@ -92,51 +68,28 @@ async function init() {
 		throw new Error('You are offline');
 	}
 
-	const parsedPath = await getRepositoryInfo(url);
-
-	if ('error' in parsedPath) {
-		// eslint-disable-next-line unicorn/prefer-switch -- I hate how it looks
-		if (parsedPath.error === 'NOT_A_REPOSITORY') {
-			updateStatus('⚠ Not a repository');
-		} else if (parsedPath.error === 'NOT_A_DIRECTORY') {
-			updateStatus('⚠ Not a directory');
-		} else if (parsedPath.error === 'REPOSITORY_NOT_FOUND') {
-			updateStatus('⚠ Repository not found. If it’s private, you should enter a token that can access it.');
-		} else {
-			updateStatus('⚠ Unknown error');
-		}
-
-		return;
-	}
-
-	const {user, repository, gitReference, directory, isPrivate} = parsedPath;
-	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`, {
-		source: {
-			user,
-			repository,
-			gitReference,
-			directory,
-			isPrivate,
-		},
+	const download = downloadDirectory(url);
+	download.addEventListener('info', event => {
+		updateStatus((event as StatusEvent).detail.message, (event as StatusEvent).detail);
+	});
+	download.addEventListener('warning', event => {
+		updateStatus(`Warning: ${(event as StatusEvent).detail.message}`, (event as StatusEvent).detail);
+	});
+	download.addEventListener('download', event => {
+		updateStatus((event as StatusEvent).detail.message, (event as StatusEvent).detail);
 	});
 
-	if ('downloadUrl' in parsedPath) {
+	const source = await download.source;
+	const {user, repository, directory} = source;
+	updateStatus(`Repo: ${user}/${repository}\nDirectory: /${directory}`, {source});
+
+	if ('downloadUrl' in source) {
 		updateStatus('Downloading the entire repository directly from GitHub');
-		window.location.href = parsedPath.downloadUrl;
+		window.location.href = source.downloadUrl;
 		return;
 	}
 
-	updateStatus('Retrieving directory info');
-
-	const files = await listFiles({
-		user,
-		repository,
-		ref: gitReference,
-		directory,
-		token: localStorage.getItem('token') ?? undefined,
-		getFullData: true,
-	});
-
+	const files = await download.files;
 	if (files.length === 0) {
 		updateStatus('No files to download');
 		return;
@@ -147,62 +100,22 @@ async function init() {
 		return;
 	}
 
-	updateStatus(`Will download ${files.length} files`);
-
-	const controller = new AbortController();
-	const signal = controller.signal;
-
-	let downloaded = 0;
-
-	try {
-		await pMap(files, async file => {
-			const blob = downloadFile({
-				user,
-				repository,
-				reference: gitReference!,
-				file,
-				isPrivate,
-				signal,
-			});
-
-			downloaded++;
-			updateStatus(file.path);
-
-			const zip = await zipPromise;
-			zip.file(file.path.replace(directory + '/', ''), blob, {
-				binary: true,
-			});
-		}, {concurrency: 20});
-	} catch (error) {
-		controller.abort();
-
-		if (!navigator.onLine) {
-			updateStatus('⚠ Could not download all files, network connection lost.');
-		} else if (isError(error) && error.message.startsWith('HTTP ')) {
-			updateStatus('⚠ Could not download all files.');
-		} else {
-			updateStatus(
-				'⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.',
-			);
-		}
-
-		throw error;
-	}
-
-	updateStatus(`Zipping ${downloaded} files...`);
+	updateStatus(`Zipping ${files.length} files...`);
 
 	const zip = await zipPromise;
-	const zipBlob = await zip.generateAsync({
-		type: 'blob',
-	});
+	for (const file of files) {
+		zip.file(file.path.replace(directory + '/', ''), file.blob, {binary: true});
+	}
+
+	const zipBlob = await zip.generateAsync({type: 'blob'});
 
 	const filename
 		= query.get('filename')
-		?? `${user} ${repository} ${gitReference} ${directory}`.replace(/\//, '-');
+		?? `${user} ${repository} ${source.gitReference} ${directory}`.replace(/\//, '-');
 
 	const zipFilename = filename.endsWith('.zip') ? filename : `${filename}.zip`;
 	saveFile(zipBlob, zipFilename);
-	updateStatus(`Downloaded ${downloaded} files! Done!`);
+	updateStatus(`Downloaded ${files.length} files! Done!`);
 }
 
 // eslint-disable-next-line unicorn/prefer-top-level-await -- Not allowed
@@ -224,8 +137,33 @@ void init().catch(error => {
 				break;
 			}
 
+			case 'NOT_A_REPOSITORY': {
+				updateStatus('⚠ Not a repository');
+				break;
+			}
+
+			case 'NOT_A_DIRECTORY': {
+				updateStatus('⚠ Not a directory');
+				break;
+			}
+
+			case 'REPOSITORY_NOT_FOUND': {
+				updateStatus('⚠ Repository not found. If it’s private, you should enter a token that can access it.');
+				break;
+			}
+
 			default: {
-				updateStatus(`⚠ ${error.message}`, error);
+				if (!navigator.onLine) {
+					updateStatus('⚠ Could not download all files, network connection lost.');
+				} else if (isError(error) && error.message.startsWith('HTTP ')) {
+					updateStatus('⚠ Could not download all files.');
+				} else {
+					updateStatus(
+						'⚠ Some files were blocked from downloading, try to disable any ad blockers and refresh the page.',
+						error,
+					);
+				}
+
 				break;
 			}
 		}
