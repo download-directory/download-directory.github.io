@@ -94,7 +94,7 @@ async function init() {
 
 	const repositoryPreview = getRepositoryPreview(url);
 	if (!('error' in repositoryPreview)) {
-		updateStatus(`Repo: ${repositoryPreview.user}/${repositoryPreview.repository}\nDirectory: /${repositoryPreview.directory}`);
+		updateStatus(`Parsed URL — Repo: ${repositoryPreview.user}/${repositoryPreview.repository}\nDirectory: /${repositoryPreview.directory}`);
 	}
 
 	const parsedPath = await getRepositoryInfo(url);

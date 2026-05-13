@@ -77,7 +77,7 @@ export default async function getRepositoryInfo(
 	const pathParts = cleanUrl(
 		decodeURIComponent(new URL(url).pathname),
 	).split('/');
-	const parts = pathParts.slice(4);
+	const parts = pathParts[3] === 'tree' ? pathParts.slice(4) : [];
 
 	const repoInfoResponse = await authenticatedFetch(
 		`https://api.github.com/repos/${user}/${repository}`,
