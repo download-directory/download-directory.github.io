@@ -12,12 +12,11 @@ export default async function authenticatedFetch(
 	{signal, method}: {signal?: AbortSignal; method?: 'HEAD'} = {},
 ): Promise<Response> {
 	const token = globalThis.localStorage?.getItem('token');
-	const isGitHubApiRequest = isGitHubApiUrl(url);
 
 	const response = await fetch(url, {
 		method,
 		signal,
-		...(token && isGitHubApiRequest
+		...(token && isGitHubApiUrl(url)
 			? {
 				headers: {
 					// eslint-disable-next-line @typescript-eslint/naming-convention
