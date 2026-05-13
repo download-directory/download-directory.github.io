@@ -60,6 +60,7 @@ async function getZip() {
 }
 
 const googleDoesntLikeThis = /malware|virus|trojan/i;
+let hasShownGoogleSafeBrowsingStatus = false;
 
 async function init() {
 	updateStatus();
@@ -134,6 +135,11 @@ async function init() {
 
 	files = files.filter(file => {
 		if (googleDoesntLikeThis.test(file.path)) {
+			if (!hasShownGoogleSafeBrowsingStatus) {
+				hasShownGoogleSafeBrowsingStatus = true;
+				updateStatus('⚠ Some files were blocked due to Google Safe Browsing.');
+			}
+
 			updateStatus(`File blocked: ${file.path}`);
 			return false;
 		}
