@@ -10,7 +10,6 @@ import {
 import pMap from 'p-map';
 import {downloadFile} from './download.js';
 import getRepositoryInfo from './repository-info.js';
-import {filterBlockedFiles} from './blocked-files.js';
 
 type ApiOptions = ListGithubDirectoryOptions & {getFullData: true};
 
@@ -59,6 +58,8 @@ async function getZip() {
 	const JSZip = await import('jszip') as typeof import('jszip');
 	return new JSZip();
 }
+
+const googleDoesntLikeThis = /malware|virus|trojan/i;
 
 async function init() {
 	updateStatus();
@@ -122,7 +123,7 @@ async function init() {
 
 	updateStatus('Retrieving directory info');
 
-	const files = await listFiles({
+	let files = await listFiles({
 		user,
 		repository,
 		ref: gitReference,
@@ -131,22 +132,21 @@ async function init() {
 		getFullData: true,
 	});
 
+	files = files.filter(file => {
+		if (googleDoesntLikeThis.test(file.path)) {
+			updateStatus(`File blocked: ${file.path}`);
+			return false;
+		}
+
+		return true;
+	});
+
 	if (files.length === 0) {
 		updateStatus('No files to download');
 		return;
 	}
 
-	const {allowedFiles, blockedFiles} = filterBlockedFiles(files);
-	for (const blockedFile of blockedFiles) {
-		updateStatus(`File blocked: ${blockedFile.path}`);
-	}
-
-	if (allowedFiles.length === 0) {
-		updateStatus('No files to download');
-		return;
-	}
-
-	updateStatus(`Will download ${allowedFiles.length} files`);
+	updateStatus(`Will download ${files.length} files`);
 
 	const controller = new AbortController();
 	const signal = controller.signal;
@@ -154,7 +154,7 @@ async function init() {
 	let downloaded = 0;
 
 	try {
-		await pMap(allowedFiles, async file => {
+		await pMap(files, async file => {
 			const blob = downloadFile({
 				user,
 				repository,
