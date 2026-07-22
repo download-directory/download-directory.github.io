@@ -6,7 +6,7 @@ GitHub doesn’t let you download a single folder from a repo, which might be ne
 
 This tool will handle the download of all the files in a directory, in a single click, after you entered your token.
 
-The download starts automatically when you visit pass the link to the GitHub directory as `url` parameter, like:
+The download starts automatically when you visit paste the link to the GitHub directory as `url` parameter, like:
 
 [**download-directory.github.io**`?url=https://github.com/mrdoob/three.js/tree/dev/build`](https://download-directory.github.io/?url=https://github.com/mrdoob/three.js/tree/dev/build)
 
