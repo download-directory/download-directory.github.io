@@ -215,7 +215,7 @@ async function init() {
 		= query.get('filename')
 		?? `${user} ${repository} ${gitReference} ${directory}`.replace(/\//, '-');
 
-	const zipFilename = filename.endsWith('.zip') ? filename : `${filename}.zip`;
+	const zipFilename = (filename.endsWith('.zip') ? filename : `${filename}.zip`).replaceAll(' ', '_');
 	saveFile(zipBlob, zipFilename);
 	if (foundBlockedFiles) {
 		updateStatus('⚠ Some files were blocked due to Google Safe Browsing.');
